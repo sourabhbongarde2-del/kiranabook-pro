@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KiranaBook Pro — Bongarde Software</title>
+<meta name="description" content="Complete Kirana Store Management System">
+
+<!-- ══════════════════════════════════════════════
+  🔥 FIREBASE CONFIG — STEP 3 MEIN YAHAN APNI
+     VALUES DAALANA HAI
+════════════════════════════════════════════════ -->
+<script>
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyDf3pMhdNuxK25ym9kmvXKqdV6iWOYhVx0",
+    authDomain:        "kiranabook-d050d.firebaseapp.com",
+    projectId:         "kiranabook-d050d",
+    storageBucket:     "kiranabook-d050d.appspot.com",
+    messagingSenderId: "55792176160",
+    appId:             "1:55792176160:web:c74139a7907eeb6cd08045"
+  };
+
+  // 👑 OWNER KI GMAIL
+  const OWNER_EMAIL = "sourabhbongarde2@gmail.com";
+
+  // 💰 SUBSCRIPTION
+  const SUB_PRICE   = 1000;
+  const GPAY_NUMBER = "7875817356";
+  const GPAY_NAME   = "Sourabh Bongarde";
+</script>
+
+<!-- Firebase SDKs (free CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --saffron:#FF6B00; --saffron-l:#FF8C38; --saffron-pale:#FFF3E8;
+  --green:#1A7F4B;   --green-l:#E8F5EE;
+  --dark:#1A1A2E;    --dark2:#16213E;
+  --text:#2D2D2D;    --muted:#7A7A9A;
+  --border:#E8E8F0;  --red:#E53935;
+  --blue:#1565C0;    --yellow:#F9A825;
+  --card-sh:0 4px 24px rgba(0,0,0,0.08);
+  --hover-sh:0 8px 40px rgba(255,107,0,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans',sans-serif;background:#F4F5FA;color:var(--text);min-height:100vh}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#loading.hide{opacity:0;pointer-events:none}
+.loader-logo{font-family:'Baloo 2',cursive;font-size:36px;font-weight:800;color:white;margin-bottom:16px}
+.loader-logo span{color:var(--saffron)}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--saffron);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{color:rgba(255,255,255,.5);font-size:13px;margin-top:12px}
+
+/* ── SCREENS ── */
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── LOGIN ── */
+#loginScreen{min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--dark2),#0F3460);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+#loginScreen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,107,0,.15),transparent 70%);top:-200px;right:-200px;pointer-events:none}
+.login-card{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;text-align:center;position:relative;z-index:1}
+.login-logo{width:72px;height:72px;background:linear-gradient(135deg,var(--saffron),var(--saffron-l));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;box-shadow:0 8px 32px rgba(255,107,0,.4)}
+.login-title{font-family:'Baloo 2',cursive;font-size:32px;font-weight:800;color:white}
+.login-title span{color:var(--saffron)}
+.login-sub{color:rgba(255,255,255,.5);font-size:14px;margin:6px 0 36px}
+.google-btn{width:100%;padding:16px 24px;background:white;border:none;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:16px;font-weight:600;color:var(--text);cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.google-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.google-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.login-features{margin-top:24px;background:rgba(255,255,255,.05);border-radius:12px;padding:16px;text-align:left;list-style:none}
+.login-features li{color:rgba(255,255,255,.6);font-size:13px;padding:4px 0;display:flex;align-items:center;gap:8px}
+.login-features li::before{content:'✦';color:var(--saffron);font-size:10px}
+
+/* ── SUBSCRIPTION WALL ── */
+#subScreen{min-height:100vh;background:linear-gradient(135deg,#FFF8F0,#F0FFF8);display:flex;align-items:center;justify-content:center;padding:20px}
+.sub-card{background:white;border-radius:24px;padding:40px;max-width:480px;width:100%;box-shadow:var(--card-sh);text-align:center}
+.sub-user-row{display:flex;align-items:center;gap:12px;background:var(--saffron-pale);border-radius:12px;padding:12px 16px;margin-bottom:28px;text-align:left}
+.sub-avatar{width:44px;height:44px;border-radius:50%;background:var(--saffron);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;flex-shrink:0;overflow:hidden}
+.sub-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.sub-user-name{font-weight:600;font-size:15px}
+.sub-user-email{font-size:12px;color:var(--muted)}
+.price-badge{display:inline-flex;flex-direction:column;align-items:center;background:linear-gradient(135deg,var(--saffron),#FF4500);color:white;border-radius:20px;padding:20px 36px;margin-bottom:24px}
+.price-amount{font-family:'Baloo 2',cursive;font-size:48px;font-weight:800;line-height:1}
+.price-period{font-size:13px;opacity:.85;margin-top:4px}
+.features-list{text-align:left;margin:20px 0;list-style:none}
+.features-list li{padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:14px}
+.features-list li:last-child{border-bottom:none}
+.gpay-box{background:#1A1A1A;border-radius:16px;padding:20px;margin:20px 0;color:white}
+.gpay-title{font-size:12px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.gpay-num{font-family:'Baloo 2',cursive;font-size:28px;font-weight:700;color:var(--yellow);letter-spacing:2px}
+.gpay-name{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+.copy-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:10px;transition:all .2s}
+.copy-btn:hover{background:rgba(255,255,255,.2)}
+.pending-msg{background:#FFF3CD;border:1px solid #FFD700;border-radius:12px;padding:14px 16px;font-size:13px;color:#856404;margin-top:12px;text-align:left}
+.sub-logout{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-top:16px;text-decoration:underline}
+
+/* ── TOPBAR ── */
+.topbar{background:linear-gradient(135deg,var(--dark),var(--dark2));height:60px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.topbar-brand{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:white}
+.topbar-brand span{color:var(--saffron)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.sub-badge{background:var(--green);color:white;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.sub-badge.red{background:var(--red)}
+.avatar-btn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;overflow:hidden;background:var(--saffron)}
+.avatar-btn img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.avatar-btn:hover{transform:scale(1.1)}
+
+/* ── USER MENU ── */
+.user-menu{display:none;position:fixed;top:65px;right:16px;background:white;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.15);z-index:200;width:240px;overflow:hidden;border:1px solid var(--border)}
+.user-menu-header{padding:16px;border-bottom:1px solid var(--border);background:var(--saffron-pale)}
+.user-menu-name{font-weight:700;font-size:15px}
+.user-menu-email{font-size:12px;color:var(--muted)}
+.menu-item{padding:10px 14px;cursor:pointer;font-size:14px;transition:all .2s;display:flex;align-items:center;gap:8px}
+.menu-item:hover{background:#F4F5FA}
+.menu-item.danger{color:var(--red)}
+.menu-item.danger:hover{background:#FFEBEE}
+
+/* ── SYNC BAR ── */
+.sync-bar{background:var(--green-l);border-bottom:1px solid #C8E6D0;padding:6px 20px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green);font-weight:500}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* ── NAV TABS ── */
+.nav-tabs{background:white;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;padding:0 16px;gap:4px;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:14px 18px;border:none;background:none;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;position:relative;transition:all .2s;display:flex;align-items:center;gap:6px}
+.nav-tab:hover{color:var(--saffron)}
+.nav-tab.active{color:var(--saffron)}
+.nav-tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--saffron);border-radius:2px 2px 0 0}
+
+/* ── CONTENT ── */
+.content{padding:20px;max-width:1200px;margin:0 auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── PAGE HEADER ── */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.ph-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:700;color:var(--dark)}
+.ph-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:white;border-radius:16px;padding:20px;box-shadow:var(--card-sh);display:flex;align-items:center;gap:16px;transition:all .3s}
+.stat-card:hover{box-shadow:var(--hover-sh);transform:translateY(-2px)}
+.stat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.si-o{background:var(--saffron-pale)} .si-g{background:var(--green-l)} .si-b{background:#E3F2FD} .si-r{background:#FFEBEE}
+.stat-val{font-family:'Baloo 2',cursive;font-size:28px;font-weight:700;color:var(--dark);line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* ── CARD ── */
+.card{background:white;border-radius:16px;box-shadow:var(--card-sh);overflow:hidden;margin-bottom:20px}
+.card-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.card-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px}
+
+/* ── BUTTONS ── */
+.btn{padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;font-family:'Noto Sans',sans-serif}
+.btn-p{background:var(--saffron);color:white}
+.btn-p:hover{background:#E55A00;transform:translateY(-1px);box-shadow:0 4px 15px rgba(255,107,0,.3)}
+.btn-s{background:var(--green);color:white}
+.btn-s:hover{background:#146B3C}
+.btn-d{background:var(--red);color:white}
+.btn-d:hover{background:#C62828}
+.btn-o{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-o:hover{border-color:var(--saffron);color:var(--saffron)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:8px}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#F8F9FF;padding:12px 16px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;border-bottom:1px solid #F0F0F8;font-size:14px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFAFE}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-a{background:#E8F5EE;color:var(--green)}
+.badge-i{background:#FFEBEE;color:var(--red)}
+.badge-p{background:#FFF8E1;color:#E65100}
+.bdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+.fg{display:flex;flex-direction:column;gap:6px}
+.fg label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.fc{padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--text);transition:all .2s;font-family:'Noto Sans',sans-serif;width:100%;background:white}
+.fc:focus{outline:none;border-color:var(--saffron);box-shadow:0 0 0 3px rgba(255,107,0,.1)}
+.fc::placeholder{color:#B0B0C0}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative;flex:1;min-width:180px;max-width:300px}
+.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;transition:all .2s;font-family:'Noto Sans',sans-serif}
+.search-wrap input:focus{outline:none;border-color:var(--saffron)}
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+/* ── QUICK ACTIONS ── */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:600px){.qa-grid{grid-template-columns:repeat(2,1fr)}}
+.qa-btn{background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:all .2s}
+.qa-btn:hover{border-color:var(--saffron);box-shadow:var(--hover-sh);transform:translateY(-2px)}
+.qa-ico{font-size:28px;margin-bottom:8px}
+.qa-lbl{font-size:12px;font-weight:600;color:var(--text)}
+
+/* ── PRODUCT ITEM ── */
+.prod-item{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #F0F0F8;transition:all .2s}
+.prod-item:last-child{border-bottom:none}
+.prod-item:hover{background:#FAFAFE}
+.prod-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.prod-name{font-weight:600;font-size:15px}
+.prod-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.prod-price{font-family:'Baloo 2',cursive;font-size:17px;font-weight:700;color:var(--saffron)}
+
+/* ── CAT PILLS ── */
+.cat-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.cat-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;transition:all .2s}
+.cat-pill.active,.cat-pill:hover{background:var(--saffron);color:white;border-color:var(--saffron)}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal{background:white;border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:mIn .3s ease}
+@keyframes mIn{from{transform:scale(.9) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-hdr{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-ttl{font-family:'Baloo 2',cursive;font-size:20px;font-weight:700}
+.modal-cls{width:32px;height:32px;border-radius:50%;border:none;background:var(--border);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-cls:hover{background:var(--red);color:white}
+.modal-body{padding:24px}
+.modal-ftr{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);border-bottom:none}
+
+/* ── BILLING CART ── */
+.cart-item{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cart-total-box{background:var(--dark);color:white;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+.cart-total-lbl{font-size:14px;opacity:.7}
+.cart-total-amt{font-family:'Baloo 2',cursive;font-size:28px;font-weight:700;color:var(--yellow)}
+
+/* ── OWNER ── */
+.owner-hdr{background:linear-gradient(135deg,var(--dark),#0F3460);border-radius:16px;padding:24px;margin-bottom:20px;color:white;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.owner-badge{background:var(--saffron);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;color:white;text-transform:uppercase;letter-spacing:1px}
+.owner-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800}
+.rev-card{background:linear-gradient(135deg,var(--saffron),#FF4500);border-radius:16px;padding:24px;color:white;position:relative;overflow:hidden}
+.rev-card::before{content:'₹';position:absolute;right:-10px;top:-20px;font-size:140px;opacity:.1;font-family:'Baloo 2',cursive;font-weight:800;line-height:1}
+.rev-amt{font-family:'Baloo 2',cursive;font-size:40px;font-weight:800;line-height:1}
+.rev-lbl{font-size:13px;opacity:.8;margin-top:6px}
+.store-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── DRIVE ── */
+.drive-hdr{background:linear-gradient(135deg,#1557CB,#1A73E8);border-radius:16px;padding:20px;color:white;margin-bottom:20px}
+.drive-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.drive-file{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.1);border-radius:10px;margin-bottom:8px;font-size:13px}
+.drive-file:last-child{margin-bottom:0}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--dark);color:white;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.2);animation:tIn .3s ease;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast.s{border-left:3px solid var(--green)}
+.toast.e{border-left:3px solid var(--red)}
+.toast.i{border-left:3px solid var(--blue)}
+@keyframes tIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-ico{font-size:48px;margin-bottom:16px}
+.empty-txt{font-size:16px;font-weight:600;color:var(--text)}
+.empty-sub{font-size:13px;margin-top:6px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .content{padding:14px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .ph{flex-direction:column;align-items:flex-start}
+  #billingGrid{grid-template-columns:1fr!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOADING ══ -->
+<div id="loading">
+  <div class="loader-logo">Kirana<span>Book</span></div>
+  <div class="spinner"></div>
+  <div class="loader-msg" id="loaderMsg">Initializing...</div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen" class="screen">
+  <div class="login-card">
+    <div class="login-logo">🛒</div>
+    <div class="login-title">Kirana<span>Book</span> Pro</div>
+    <div class="login-sub">Complete Kirana Store Management System</div>
+    <button class="google-btn" id="googleLoginBtn" onclick="signInWithGoogle()">
+      <svg width="22" height="22" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Gmail se Login Karo
+    </button>
+    <ul class="login-features">
+      <li>Apni Gmail se secure login</li>
+      <li>Data Google Firestore mein auto-save</li>
+      <li>₹1,000/month subscription plan</li>
+      <li>Complete POS + Inventory management</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══ SUBSCRIPTION WALL ══ -->
+<div id="subScreen" class="screen">
+  <div class="sub-card">
+    <div style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:20px">🛒 KiranaBook Pro</div>
+    <div class="sub-user-row">
+      <div class="sub-avatar" id="subAvatar">U</div>
+      <div>
+        <div class="sub-user-name" id="subName">Loading...</div>
+        <div class="sub-user-email" id="subEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d3bfbcb2b7babdb493b4beb2babffdb0bcbe">[email&#160;protected]</a></div>
+      </div>
+    </div>
+    <div id="subMsg"></div>
+    <div class="price-badge">
+      <div class="price-amount">₹1,000</div>
+      <div class="price-period">per month • sabhi features included</div>
+    </div>
+    <ul class="features-list">
+      <li>✅ Unlimited Products &amp; Billing</li>
+      <li>✅ Cloud Data — Kabhi nahi jayega</li>
+      <li>✅ Sales Reports &amp; Analytics</li>
+      <li>✅ Customer &amp; Credit Management</li>
+      <li>✅ GST Bill Print</li>
+      <li>✅ Stock Alerts</li>
+    </ul>
+    <div class="gpay-box">
+      <div class="gpay-title">Payment karo — Google Pay pe</div>
+      <div class="gpay-num" id="gpayNum">7875817356</div>
+      <div class="gpay-name" id="gpayNameEl">Sourabh Bongarde — KiranaBook Pro</div>
+      <button class="copy-btn" onclick="copyGPay()">📋 Number Copy Karo</button>
+    </div>
+    <div class="pending-msg">
+      ⚠️ Payment ke baad WhatsApp karo <strong>7875817356</strong> pe UTR/screenshot bhejo. 2-4 ghante mein activate ho jayega.
+    </div>
+    <button class="sub-logout" onclick="doSignOut()">← Logout karo</button>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="appScreen" class="screen">
+
+  <div class="topbar">
+    <div class="topbar-brand">Kirana<span>Book</span></div>
+    <div class="topbar-right">
+      <span class="sub-badge" id="subBadge">✓ Active</span>
+      <div class="avatar-btn" id="topAvatar" onclick="toggleMenu()">U</div>
+    </div>
+  </div>
+
+  <div class="user-menu" id="userMenu">
+    <div class="user-menu-header">
+      <div class="user-menu-name" id="menuName">User</div>
+      <div class="user-menu-email" id="menuEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4d1d7c1d6e4c3c9c5cdc88ac7cbc9">[email&#160;protected]</a></div>
+    </div>
+    <div class="menu-item" onclick="goTab('drive')">☁️ Cloud Data</div>
+    <div class="menu-item danger" onclick="doSignOut()">🚪 Logout</div>
+  </div>
+
+  <div class="sync-bar">
+    <div class="sync-dot"></div>
+    <span id="syncText">Firestore se connected — Data cloud mein save ho raha hai</span>
+  </div>
+
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="dashboard">🏠 Dashboard</button>
+    <button class="nav-tab" data-tab="products">📦 Products</button>
+    <button class="nav-tab" data-tab="billing">🧾 Billing</button>
+    <button class="nav-tab" data-tab="sales">📊 Sales</button>
+    <button class="nav-tab" data-tab="customers">👥 Customers</button>
+    <button class="nav-tab" data-tab="drive">☁️ Cloud Data</button>
+    <button class="nav-tab" data-tab="owner" id="ownerTab" style="display:none">👑 Owner Panel</button>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="ph">
+        <div>
+          <div class="ph-title" id="dashGreet">Namaste! 👋</div>
+          <div class="ph-sub" id="dashDate"></div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon si-o">💰</div><div><div class="stat-val" id="dSales">₹0</div><div class="stat-lbl">Aaj ki Bikri</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-g">📦</div><div><div class="stat-val" id="dProds">0</div><div class="stat-lbl">Total Products</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-b">🧾</div><div><div class="stat-val" id="dBills">0</div><div class="stat-lbl">Aaj ke Bills</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-r">⚠️</div><div><div class="stat-val" id="dLow">0</div><div class="stat-lbl">Low Stock</div></div></div>
+      </div>
+      <div class="qa-grid">
+        <div class="qa-btn" onclick="goTab('billing')"><div class="qa-ico">🧾</div><div class="qa-lbl">New Bill</div></div>
+        <div class="qa-btn" onclick="openAddProd()"><div class="qa-ico">➕</div><div class="qa-lbl">Add Product</div></div>
+        <div class="qa-btn" onclick="goTab('sales')"><div class="qa-ico">📊</div><div class="qa-lbl">View Sales</div></div>
+        <div class="qa-btn" onclick="goTab('customers')"><div class="qa-ico">👥</div><div class="qa-lbl">Customers</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Recent Bills</div></div>
+        <div id="dashBillsList"></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="tab-panel" id="tab-products">
+      <div class="ph">
+        <div><div class="ph-title">📦 Products</div><div class="ph-sub">Inventory manage karo</div></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Search product..." oninput="filterProds(this.value)"></div>
+          <button class="btn btn-p" onclick="openAddProd()">+ Product Add</button>
+        </div>
+      </div>
+      <div class="cat-pills">
+        <div class="cat-pill active" onclick="setCat('all',this)">All</div>
+        <div class="cat-pill" onclick="setCat('Grocery',this)">🌾 Grocery</div>
+        <div class="cat-pill" onclick="setCat('Dairy',this)">🥛 Dairy</div>
+        <div class="cat-pill" onclick="setCat('Snacks',this)">🍟 Snacks</div>
+        <div class="cat-pill" onclick="setCat('Beverages',this)">🥤 Beverages</div>
+        <div class="cat-pill" onclick="setCat('Personal Care',this)">🧴 Personal Care</div>
+      </div>
+      <div class="card"><div id="prodList"></div></div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="tab-panel" id="tab-billing">
+      <div class="ph"><div class="ph-title">🧾 New Bill Banao</div></div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px" id="billingGrid">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <div class="card-title">Products Select Karo</div>
+            <div class="search-wrap" style="max-width:220px"><span class="search-ico">🔍</span><input type="text" placeholder="Search..." oninput="filterBillProds(this.value)"></div>
+          </div>
+          <div id="billProdGrid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-height:480px;overflow-y:auto"></div>
+        </div>
+        <div>
+          <div class="card" style="position:sticky;top:80px;margin-bottom:0">
+            <div class="card-header"><div class="card-title">🛒 Cart</div><button class="btn btn-o btn-sm" onclick="clearCart()">Clear</button></div>
+            <div style="padding:16px">
+              <div class="fg" style="margin-bottom:12px">
+                <label>Customer Name</label>
+                <input type="text" class="fc" id="billCust" placeholder="Optional">
+              </div>
+              <div id="cartList" style="min-height:80px;max-height:260px;overflow-y:auto"></div>
+              <div class="cart-total-box" id="cartTotalBox" style="display:none">
+                <div><div class="cart-total-lbl">Total</div><div style="font-size:12px;color:rgba(255,255,255,.5)" id="cartCount">0 items</div></div>
+                <div class="cart-total-amt" id="cartTotal">₹0</div>
+              </div>
+              <button class="btn btn-p" style="width:100%;margin-top:14px;padding:14px" onclick="genBill()">🧾 Bill Generate Karo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div class="tab-panel" id="tab-sales">
+      <div class="ph"><div class="ph-title">📊 Sales Report</div></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon si-o">📅</div><div><div class="stat-val" id="sToday">₹0</div><div class="stat-lbl">Aaj</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-g">🗓️</div><div><div class="stat-val" id="sWeek">₹0</div><div class="stat-lbl">Is Hafte</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-b">📆</div><div><div class="stat-val" id="sMonth">₹0</div><div class="stat-lbl">Is Mahine</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-r">🧾</div><div><div class="stat-val" id="sBillCnt">0</div><div class="stat-lbl">Total Bills</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Bills History</div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Bill No.</th><th>Customer</th><th>Items</th><th>Amount</th><th>Date</th></tr></thead>
+          <tbody id="salesTbl"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Koi bill nahi</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="tab-panel" id="tab-customers">
+      <div class="ph">
+        <div><div class="ph-title">👥 Customers</div></div>
+        <button class="btn btn-p" onclick="openAddCust()">+ Customer Add</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Phone</th><th>Udhar</th><th>Action</th></tr></thead>
+          <tbody id="custTbl"><tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Koi customer nahi</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLOUD DATA -->
+    <div class="tab-panel" id="tab-drive">
+      <div class="ph"><div class="ph-title">☁️ Cloud Data</div></div>
+      <div class="drive-hdr">
+        <div class="drive-title">📁 Firestore / KiranaBook / <span id="driveFolder">YourStore</span></div>
+        <div class="drive-file">📦 <span>products</span><span style="margin-left:auto;opacity:.6;font-size:12px" id="driveProds">0 items</span></div>
+        <div class="drive-file">🧾 <span>bills</span><span style="margin-left:auto;opacity:.6;font-size:12px" id="driveBills">0 bills</span></div>
+        <div class="drive-file">👥 <span>customers</span><span style="margin-left:auto;opacity:.6;font-size:12px" id="driveCusts">0 customers</span></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔄 Data Controls</div></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:#F4F5FA;border-radius:12px">
+            <div><div style="font-weight:600;font-size:14px">Auto Cloud Save</div><div style="font-size:12px;color:var(--muted)">Har change instantly Firestore mein</div></div>
+            <div style="background:var(--green);color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">ON</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:#F4F5FA;border-radius:12px">
+            <div><div style="font-weight:600;font-size:14px">Last Activity</div><div style="font-size:12px;color:var(--muted)" id="lastActivity">—</div></div>
+          </div>
+          <button class="btn btn-o" style="width:100%" onclick="exportJSON()">⬇️ Data Export Karo (JSON)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OWNER PANEL -->
+    <div class="tab-panel" id="tab-owner">
+      <div class="owner-hdr">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span class="owner-badge">👑 Owner</span></div>
+          <div class="owner-title">Bongarde Software Solutions</div>
+          <div style="font-size:13px;opacity:.6;margin-top:4px">KiranaBook Pro — Subscription Dashboard</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:12px;opacity:.5">Admin</div>
+          <div style="font-weight:600">Sourabh Bongarde</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="rev-card">
+          <div class="rev-lbl">Monthly Revenue</div>
+          <div class="rev-amt" id="owRev">₹0</div>
+          <div style="font-size:12px;opacity:.7;margin-top:4px" id="owRevSub">0 active stores</div>
+        </div>
+        <div class="stat-card"><div class="stat-icon si-g">🏪</div><div><div class="stat-val" id="owTotal">0</div><div class="stat-lbl">Total Stores</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-o">✅</div><div><div class="stat-val" id="owActive">0</div><div class="stat-lbl">Active</div></div></div>
+        <div class="stat-card"><div class="stat-icon si-r">⛔</div><div><div class="stat-val" id="owInactive">0</div><div class="stat-lbl">Inactive</div></div></div>
+      </div>
+
+      <!-- Add Store -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">➕ Store Add / Activate Karo</div></div>
+        <div style="padding:20px">
+          <div class="form-row">
+            <div class="fg"><label>Store Owner Name *</label><input type="text" class="fc" id="nsName" placeholder="Ramesh Kirana Store"></div>
+            <div class="fg"><label>Gmail ID *</label><input type="email" class="fc" id="nsEmail" placeholder="store@gmail.com"></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Phone</label><input type="text" class="fc" id="nsPhone" placeholder="9876543210"></div>
+            <div class="fg"><label>City</label><input type="text" class="fc" id="nsCity" placeholder="Kolhapur"></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>Subscription End Date</label><input type="date" class="fc" id="nsExpiry"></div>
+            <div class="fg"><label>Status</label>
+              <select class="fc" id="nsStatus">
+                <option value="active">✅ Active</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="inactive">⛔ Inactive</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-p" onclick="addStore()" id="addStoreBtn">✅ Store Add / Update Karo</button>
+        </div>
+      </div>
+
+      <!-- Stores Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏪 All Registered Stores</div>
+          <div class="search-wrap"><span class="search-ico">🔍</span><input type="text" placeholder="Search store..." oninput="filterStores(this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Store / Owner</th><th>Gmail</th><th>Phone</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="storesTbl"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Koi store nahi</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- Payment Log -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Payment Log</div>
+          <button class="btn btn-o btn-sm" onclick="openPayModal()">+ Record Payment</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Store</th><th>Amount</th><th>Date</th><th>Month</th><th>UTR/Note</th></tr></thead>
+          <tbody id="payTbl"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Koi payment nahi</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /appScreen -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- Add Product -->
+<div class="modal-ov" id="mAddProd">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-ttl">📦 Product Add Karo</div><button class="modal-cls" onclick="closeM('mAddProd')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="fg"><label>Product Name *</label><input type="text" class="fc" id="pName" placeholder="Atta 5kg"></div>
+        <div class="fg"><label>Category</label><select class="fc" id="pCat"><option>Grocery</option><option>Dairy</option><option>Snacks</option><option>Beverages</option><option>Personal Care</option><option>Other</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Selling Price (₹) *</label><input type="number" class="fc" id="pPrice" placeholder="250"></div>
+        <div class="fg"><label>Purchase Price (₹)</label><input type="number" class="fc" id="pCost" placeholder="220"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Stock Qty</label><input type="number" class="fc" id="pStock" placeholder="50"></div>
+        <div class="fg"><label>Unit</label><select class="fc" id="pUnit"><option>Pcs</option><option>Kg</option><option>Litre</option><option>Pack</option><option>Bottle</option><option>Box</option></select></div>
+      </div>
+      <div class="fg"><label>Barcode / SKU</label><input type="text" class="fc" id="pSku" placeholder="SKU001"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-o" onclick="closeM('mAddProd')">Cancel</button>
+      <button class="btn btn-p" onclick="saveProd()" id="saveProdBtn">💾 Save Karo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Customer -->
+<div class="modal-ov" id="mAddCust">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-ttl">👤 Customer Add Karo</div><button class="modal-cls" onclick="closeM('mAddCust')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="fg"><label>Name *</label><input type="text" class="fc" id="cName" placeholder="Ramesh Ji"></div>
+        <div class="fg"><label>Phone</label><input type="text" class="fc" id="cPhone" placeholder="9876543210"></div>
+      </div>
+      <div class="fg" style="margin-bottom:14px"><label>Address</label><input type="text" class="fc" id="cAddr" placeholder="Kolhapur"></div>
+      <div class="fg"><label>Opening Udhar (₹)</label><input type="number" class="fc" id="cCredit" placeholder="0"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-o" onclick="closeM('mAddCust')">Cancel</button>
+      <button class="btn btn-p" onclick="saveCust()" id="saveCustBtn">💾 Save Karo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Log Modal -->
+<div class="modal-ov" id="mAddPay">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-ttl">💰 Payment Record Karo</div><button class="modal-cls" onclick="closeM('mAddPay')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg" style="margin-bottom:14px"><label>Store Select Karo</label><select class="fc" id="payStore"></select></div>
+      <div class="form-row">
+        <div class="fg"><label>Amount (₹)</label><input type="number" class="fc" id="payAmt" value="1000"></div>
+        <div class="fg"><label>Date</label><input type="date" class="fc" id="payDate"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Month</label><input type="text" class="fc" id="payMonth" placeholder="April 2025"></div>
+        <div class="fg"><label>UTR / Note</label><input type="text" class="fc" id="payUTR" placeholder="UTR123456"></div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-o" onclick="closeM('mAddPay')">Cancel</button>
+      <button class="btn btn-p" onclick="savePay()" id="savePayBtn">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bill Print -->
+<div class="modal-ov" id="mBill">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-ttl">🧾 Bill</div><button class="modal-cls" onclick="closeM('mBill')">✕</button></div>
+    <div class="modal-body" id="billContent"></div>
+    <div class="modal-ftr">
+      <button class="btn btn-o" onclick="closeM('mBill')">Close</button>
+      <button class="btn btn-p" onclick="window.print()">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- ══ MAIN JS ══ -->
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ═══════════════════════════════════════════
+// INIT FIREBASE
+// ═══════════════════════════════════════════
+let db, auth, user, isOwner = false;
+let products = [], bills = [], customers = [], stores = [], payments = [], cart = [];
+let activeCat = 'all', prodSearch = '', storeSearch = '';
+let editProdId = null, listeners = [];
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db   = firebase.firestore();
+    auth = firebase.auth();
+    db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    setLoader('Checking login...');
+
+    // 8 sec timeout — login screen dikha do
+    const timeout = setTimeout(() => {
+      hideLoader();
+      showScreen('loginScreen');
+    }, 8000);
+
+    auth.getRedirectResult().catch(e => console.error('Redirect:', e.code));
+
+    auth.onAuthStateChanged(u => {
+      clearTimeout(timeout);
+      handleAuthChange(u);
+    });
+
+  } catch(e) {
+    hideLoader();
+    showScreen('loginScreen');
+    console.error(e);
+  }
+}
+
+function handleAuthChange(u) {
+  if (u) {
+    user = u;
+    setLoader('Checking subscription...');
+    checkSub();
+  } else {
+    hideLoader();
+    showScreen('loginScreen');
+  }
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+async function signInWithGoogle() {
+  const btn = document.getElementById('googleLoginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Login ho raha hai...';
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+      await auth.signInWithRedirect(provider);
+    } else {
+      await auth.signInWithPopup(provider);
+    }
+  } catch(e) {
+    toast('❌ Login fail: ' + e.message, 'e');
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Gmail se Login Karo`;
+  }
+}
+
+async function checkSub() {
+  const email = user.email.toLowerCase();
+
+  // Owner check
+  if (email === OWNER_EMAIL.toLowerCase()) {
+    isOwner = true;
+    await grantAccess();
+    return;
+  }
+
+  // Firestore mein sub check
+  try {
+    const doc = await db.collection('stores').doc(email).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.status === 'active') {
+        const expiry = data.expiry ? new Date(data.expiry) : null;
+        if (!expiry || expiry >= new Date()) {
+          await grantAccess();
+          return;
+        } else {
+          showSubWall('expired');
+          return;
+        }
+      }
+    }
+    showSubWall('pending');
+  } catch(e) {
+    console.error(e);
+    showSubWall('pending');
+  }
+}
+
+async function grantAccess() {
+  setLoader('Loading your data...');
+  updateTopbar();
+  if (isOwner) {
+    document.getElementById('ownerTab').style.display = 'flex';
+    await loadOwnerData();
+  }
+  await loadUserData();
+  hideLoader();
+  showScreen('appScreen');
+  renderDash();
+  renderProds();
+  renderBillProds();
+  renderSales();
+  renderCusts();
+  updateDriveInfo();
+  toast(`🎉 Welcome, ${user.displayName || user.email}!`, 's');
+}
+
+function showSubWall(reason) {
+  hideLoader();
+  const av = document.getElementById('subAvatar');
+  if (user.photoURL) {
+    av.innerHTML = `<img src="${user.photoURL}">`;
+  } else {
+    av.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+  }
+  document.getElementById('subName').textContent = user.displayName || 'User';
+  document.getElementById('subEmail').textContent = user.email;
+  document.getElementById('gpayNum').textContent = GPAY_NUMBER;
+  document.getElementById('gpayNameEl').textContent = GPAY_NAME + ' — KiranaBook Pro';
+  const msg = reason === 'expired'
+    ? `<div style="background:#FFEBEE;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--red);font-weight:600">⛔ Tera subscription expire ho gaya. Renewal karo.</div>`
+    : `<div style="background:#E8F5EE;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--green)">⏳ Account pending activation. Payment ke baad WhatsApp karo.</div>`;
+  document.getElementById('subMsg').innerHTML = msg;
+  showScreen('subScreen');
+}
+
+async function doSignOut() {
+  closeAllMenus();
+  // Unsubscribe listeners
+  listeners.forEach(u => u());
+  listeners = [];
+  products = []; bills = []; customers = []; stores = []; payments = []; cart = [];
+  isOwner = false;
+  await auth.signOut();
+  showScreen('loginScreen');
+  toast('👋 Logout ho gaya', 'i');
+}
+
+function copyGPay() {
+  navigator.clipboard.writeText(GPAY_NUMBER).then(() => toast('📋 GPay number copy ho gaya!', 's')).catch(() => toast('Number: ' + GPAY_NUMBER, 'i'));
+}
+
+// ═══════════════════════════════════════════
+// FIRESTORE — LOAD DATA
+// ═══════════════════════════════════════════
+function userCol(col) {
+  return db.collection('users').doc(user.email).collection(col);
+}
+
+async function loadUserData() {
+  // Real-time listeners
+  const l1 = userCol('products').orderBy('createdAt','desc').onSnapshot(snap => {
+    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProds(); renderBillProds(); renderDash(); updateDriveInfo();
+  });
+  const l2 = userCol('bills').orderBy('createdAt','desc').onSnapshot(snap => {
+    bills = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDash(); renderSales(); updateDriveInfo();
+  });
+  const l3 = userCol('customers').orderBy('createdAt','desc').onSnapshot(snap => {
+    customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCusts(); updateDriveInfo();
+  });
+  listeners.push(l1, l2, l3);
+}
+
+async function loadOwnerData() {
+  const l4 = db.collection('stores').onSnapshot(snap => {
+    stores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStores(); renderOwnerStats();
+  });
+  const l5 = db.collection('payments').orderBy('createdAt','desc').onSnapshot(snap => {
+    payments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderPayLog();
+  });
+  listeners.push(l4, l5);
+}
+
+// ═══════════════════════════════════════════
+// PRODUCTS
+// ═══════════════════════════════════════════
+const PICO = { Grocery:'🌾', Dairy:'🥛', Snacks:'🍟', Beverages:'🥤', 'Personal Care':'🧴', Other:'📦' };
+const PCOL = { Grocery:'#FFF3E8', Dairy:'#E3F2FD', Snacks:'#FFF8E1', Beverages:'#E8F5EE', 'Personal Care':'#F3E5F5', Other:'#F4F5FA' };
+
+function openAddProd() {
+  editProdId = null;
+  ['pName','pPrice','pCost','pStock','pSku'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('pCat').value = 'Grocery';
+  document.getElementById('pUnit').value = 'Pcs';
+  document.getElementById('saveProdBtn').textContent = '💾 Save Karo';
+  openM('mAddProd');
+}
+
+async function saveProd() {
+  const name = document.getElementById('pName').value.trim();
+  const price = parseFloat(document.getElementById('pPrice').value);
+  if (!name || !price) { toast('❌ Name aur price zaroori hai', 'e'); return; }
+  const btn = document.getElementById('saveProdBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const data = {
+    name, price,
+    category: document.getElementById('pCat').value,
+    cost: parseFloat(document.getElementById('pCost').value) || 0,
+    stock: parseInt(document.getElementById('pStock').value) || 0,
+    unit: document.getElementById('pUnit').value,
+    sku: document.getElementById('pSku').value.trim(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try {
+    if (editProdId) {
+      await userCol('products').doc(editProdId).update(data);
+      toast('✅ Product update ho gaya!', 's');
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await userCol('products').add(data);
+      toast('✅ Product add ho gaya!', 's');
+    }
+    closeM('mAddProd');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
+  btn.disabled = false; btn.textContent = '💾 Save Karo';
+}
+
+function editProd(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editProdId = id;
+  document.getElementById('pName').value = p.name;
+  document.getElementById('pCat').value = p.category || 'Grocery';
+  document.getElementById('pPrice').value = p.price;
+  document.getElementById('pCost').value = p.cost || '';
+  document.getElementById('pStock').value = p.stock || 0;
+  document.getElementById('pUnit').value = p.unit || 'Pcs';
+  document.getElementById('pSku').value = p.sku || '';
+  document.getElementById('saveProdBtn').textContent = '💾 Update Karo';
+  openM('mAddProd');
+}
+
+async function delProd(id) {
+  if (!confirm('Product delete karna hai?')) return;
+  await userCol('products').doc(id).delete();
+  toast('🗑️ Product delete ho gaya', 'i');
+}
+
+function filterProds(q) { prodSearch = q; renderProds(); }
+function setCat(cat, el) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderProds();
+}
+
+function renderProds() {
+  const el = document.getElementById('prodList');
+  let list = products;
+  if (activeCat !== 'all') list = list.filter(p => p.category === activeCat);
+  if (prodSearch) list = list.filter(p => p.name.toLowerCase().includes(prodSearch.toLowerCase()));
+  if (!list.length) { el.innerHTML = `<div class="empty"><div class="empty-ico">📦</div><div class="empty-txt">Koi product nahi</div><div class="empty-sub">Upar se add karo</div></div>`; return; }
+  el.innerHTML = list.map(p => `
+    <div class="prod-item">
+      <div class="prod-ico" style="background:${PCOL[p.category]||'#F4F5FA'}">${PICO[p.category]||'📦'}</div>
+      <div style="flex:1">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-meta">${p.category||''} • ${p.stock||0} ${p.unit||''} ${p.sku?'• '+p.sku:''}</div>
+      </div>
+      <div style="text-align:right;margin-right:16px">
+        <div class="prod-price">₹${p.price}</div>
+        <div style="font-size:11px;color:${(p.stock||0)<5?'var(--red)':'var(--muted)'}">Stock: ${p.stock||0}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-o btn-xs" onclick="editProd('${p.id}')">✏️</button>
+        <button class="btn btn-d btn-xs" onclick="delProd('${p.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════
+// BILLING
+// ═══════════════════════════════════════════
+function filterBillProds(q) { renderBillProds(q); }
+
+function renderBillProds(q = '') {
+  const el = document.getElementById('billProdGrid');
+  let list = products;
+  if (q) list = list.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
+  if (!list.length) { el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Products tab mein pehle products add karo</div>`; return; }
+  el.innerHTML = list.map(p => `
+    <div onclick="addCart('${p.id}')" style="cursor:pointer;background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='var(--saffron)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+      <div style="font-size:26px;margin-bottom:6px">${PICO[p.category]||'📦'}</div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.2">${p.name}</div>
+      <div style="font-family:'Baloo 2',cursive;font-size:15px;font-weight:700;color:var(--saffron)">₹${p.price}</div>
+      <div style="font-size:10px;color:var(--muted)">${p.stock||0} ${p.unit||''}</div>
+    </div>
+  `).join('');
+}
+
+function addCart(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const ex = cart.find(c => c.id === id);
+  if (ex) ex.qty++;
+  else cart.push({ ...p, qty: 1 });
+  renderCart();
+  toast(`✅ ${p.name} added!`, 's');
+}
+
+function removeCart(id) { cart = cart.filter(c => c.id !== id); renderCart(); }
+function updCartQty(id, qty) {
+  const item = cart.find(c => c.id === id);
+  if (item) { item.qty = parseInt(qty) || 1; if (item.qty <= 0) removeCart(id); else renderCart(); }
+}
+function clearCart() { cart = []; renderCart(); }
+
+function renderCart() {
+  const el = document.getElementById('cartList');
+  const box = document.getElementById('cartTotalBox');
+  if (!cart.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Product click karo add karne ke liye</div>`;
+    box.style.display = 'none'; return;
+  }
+  let total = 0;
+  el.innerHTML = cart.map(item => {
+    total += item.price * item.qty;
+    return `<div class="cart-item">
+      <div style="flex:1;font-size:13px;font-weight:600">${item.name}</div>
+      <input type="number" value="${item.qty}" min="1" onchange="updCartQty('${item.id}',this.value)" style="width:50px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;text-align:center;font-size:13px">
+      <div style="font-size:13px;font-weight:700;color:var(--saffron);width:60px;text-align:right">₹${item.price * item.qty}</div>
+      <button onclick="removeCart('${item.id}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px">✕</button>
+    </div>`;
+  }).join('');
+  document.getElementById('cartTotal').textContent = `₹${total.toFixed(2)}`;
+  document.getElementById('cartCount').textContent = `${cart.length} items`;
+  box.style.display = 'flex';
+}
+
+async function genBill() {
+  if (!cart.length) { toast('❌ Cart empty hai', 'e'); return; }
+  const customer = document.getElementById('billCust').value.trim() || 'Walk-in Customer';
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const billNo = `KB-${String(bills.length + 1).padStart(4, '0')}`;
+  const bill = {
+    billNo, customer, total,
+    items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    date: new Date().toISOString()
+  };
+  try {
+    // Save bill
+    await userCol('bills').add(bill);
+    // Update stock
+    const batch = db.batch();
+    cart.forEach(item => {
+      const p = products.find(x => x.id === item.id);
+      if (p) batch.update(userCol('products').doc(item.id), { stock: Math.max(0, (p.stock||0) - item.qty) });
+    });
+    await batch.commit();
+    const savedBill = { ...bill, billNo };
+    cart = [];
+    renderCart();
+    document.getElementById('billCust').value = '';
+    showBillPrint(savedBill);
+    toast(`✅ Bill ${billNo} generated!`, 's');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
+}
+
+function showBillPrint(bill) {
+  const items = bill.items.map(i => `
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px dashed #eee">${i.name}</td>
+      <td style="padding:8px 0;border-bottom:1px dashed #eee;text-align:center">${i.qty}</td>
+      <td style="padding:8px 0;border-bottom:1px dashed #eee;text-align:right">₹${i.price}</td>
+      <td style="padding:8px 0;border-bottom:1px dashed #eee;text-align:right;font-weight:600">₹${i.price * i.qty}</td>
+    </tr>`).join('');
+  document.getElementById('billContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800">🛒 KiranaBook Pro</div>
+      <div style="font-size:12px;color:var(--muted)">Bill No: ${bill.billNo} • ${new Date().toLocaleString('hi-IN')}</div>
+      <div style="font-size:13px;margin-top:4px;font-weight:600">Customer: ${bill.customer}</div>
+    </div>
+    <table style="width:100%">
+      <thead><tr style="font-size:12px;color:var(--muted)"><th style="text-align:left;padding-bottom:8px">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${items}</tbody>
+    </table>
+    <div style="margin-top:16px;background:var(--dark);color:white;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:14px">TOTAL</span>
+      <span style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:#F9A825">₹${bill.total.toFixed(2)}</span>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">Thank you! Phir aana 🙏</div>`;
+  openM('mBill');
+}
+
+// ═══════════════════════════════════════════
+// SALES
+// ═══════════════════════════════════════════
+function renderSales() {
+  const today = new Date().toDateString();
+  const weekAgo = new Date(Date.now() - 7*24*3600000);
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let t=0, w=0, m=0;
+  bills.forEach(b => {
+    const d = new Date(b.date || b.createdAt?.seconds * 1000);
+    if (d.toDateString() === today) t += b.total;
+    if (d >= weekAgo) w += b.total;
+    if (d >= monthStart) m += b.total;
+  });
+  document.getElementById('sToday').textContent = `₹${t.toFixed(0)}`;
+  document.getElementById('sWeek').textContent = `₹${w.toFixed(0)}`;
+  document.getElementById('sMonth').textContent = `₹${m.toFixed(0)}`;
+  document.getElementById('sBillCnt').textContent = bills.length;
+  const tbody = document.getElementById('salesTbl');
+  if (!bills.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">Koi bill nahi</td></tr>`; return; }
+  tbody.innerHTML = bills.map(b => `
+    <tr>
+      <td><strong>${b.billNo}</strong></td>
+      <td>${b.customer}</td>
+      <td>${b.items?.length||0} items</td>
+      <td><strong style="color:var(--saffron)">₹${b.total?.toFixed(2)}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${new Date(b.date||0).toLocaleDateString('hi-IN')}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// CUSTOMERS
+// ═══════════════════════════════════════════
+function openAddCust() {
+  ['cName','cPhone','cAddr','cCredit'].forEach(i => document.getElementById(i).value = '');
+  openM('mAddCust');
+}
+
+async function saveCust() {
+  const name = document.getElementById('cName').value.trim();
+  if (!name) { toast('❌ Name zaroori hai', 'e'); return; }
+  const btn = document.getElementById('saveCustBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await userCol('customers').add({
+      name,
+      phone: document.getElementById('cPhone').value.trim(),
+      address: document.getElementById('cAddr').value.trim(),
+      credit: parseFloat(document.getElementById('cCredit').value) || 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeM('mAddCust');
+    toast('✅ Customer add ho gaya!', 's');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
+  btn.disabled = false; btn.textContent = '💾 Save Karo';
+}
+
+async function delCust(id) {
+  if (!confirm('Customer delete karna hai?')) return;
+  await userCol('customers').doc(id).delete();
+  toast('🗑️ Customer delete ho gaya', 'i');
+}
+
+function renderCusts() {
+  const tbody = document.getElementById('custTbl');
+  if (!customers.length) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">Koi customer nahi</td></tr>`; return; }
+  tbody.innerHTML = customers.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.phone||'—'}</td>
+      <td style="color:${c.credit>0?'var(--red)':'var(--green)'}"><strong>₹${c.credit||0}</strong></td>
+      <td><button class="btn btn-d btn-xs" onclick="delCust('${c.id}')">🗑️</button></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+function renderDash() {
+  const today = new Date().toDateString();
+  let sales=0, todayBills=0;
+  bills.forEach(b => { if (new Date(b.date||0).toDateString()===today) { sales+=b.total; todayBills++; } });
+  const low = products.filter(p => (p.stock||0) < 5).length;
+  document.getElementById('dSales').textContent = `₹${sales.toFixed(0)}`;
+  document.getElementById('dProds').textContent = products.length;
+  document.getElementById('dBills').textContent = todayBills;
+  document.getElementById('dLow').textContent = low;
+  const h = new Date().getHours();
+  const g = h<12?'Subah':h<17?'Dopahar':'Shaam';
+  document.getElementById('dashGreet').textContent = `${g} ki Shubhkamna, ${(user.displayName||'').split(' ')[0]||'Dost'}! 🙏`;
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('hi-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const el = document.getElementById('dashBillsList');
+  const recent = bills.slice(0,5);
+  if (!recent.length) { el.innerHTML = `<div class="empty"><div class="empty-ico">🧾</div><div class="empty-txt">Koi bill nahi</div><div class="empty-sub">Billing tab se banao</div></div>`; return; }
+  el.innerHTML = recent.map(b => `
+    <div class="prod-item">
+      <div class="prod-ico" style="background:var(--saffron-pale)">🧾</div>
+      <div style="flex:1"><div class="prod-name">${b.billNo} — ${b.customer}</div><div class="prod-meta">${b.items?.length||0} items • ${new Date(b.date||0).toLocaleDateString('hi-IN')}</div></div>
+      <div class="prod-price">₹${b.total?.toFixed(0)}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// OWNER PANEL
+// ═══════════════════════════════════════════
+async function addStore() {
+  const name = document.getElementById('nsName').value.trim();
+  const email = document.getElementById('nsEmail').value.trim().toLowerCase();
+  if (!name || !email) { toast('❌ Name aur Gmail zaroori hai', 'e'); return; }
+  const btn = document.getElementById('addStoreBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await db.collection('stores').doc(email).set({
+      name, email,
+      phone: document.getElementById('nsPhone').value.trim(),
+      city: document.getElementById('nsCity').value.trim(),
+      expiry: document.getElementById('nsExpiry').value,
+      status: document.getElementById('nsStatus').value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    toast(`✅ Store saved: ${name}`, 's');
+    ['nsName','nsEmail','nsPhone','nsCity'].forEach(i => document.getElementById(i).value = '');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
+  btn.disabled = false; btn.textContent = '✅ Store Add / Update Karo';
+}
+
+async function toggleStore(email, status) {
+  await db.collection('stores').doc(email).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  toast(`${status==='active'?'✅ Activated':'⛔ Deactivated'}`, status==='active'?'s':'i');
+}
+
+async function delStore(email) {
+  if (!confirm('Store delete karna hai?')) return;
+  await db.collection('stores').doc(email).delete();
+  toast('🗑️ Store deleted', 'i');
+}
+
+async function editExpiry(email, name) {
+  const current = stores.find(s => s.id === email)?.expiry || '';
+  const val = prompt(`${name} ki expiry date (YYYY-MM-DD):`, current);
+  if (val) {
+    await db.collection('stores').doc(email).update({ expiry: val });
+    toast('📅 Expiry updated', 's');
+  }
+}
+
+function filterStores(q) { storeSearch = q; renderStores(); }
+
+function renderStores() {
+  const tbody = document.getElementById('storesTbl');
+  let list = stores;
+  if (storeSearch) list = list.filter(s => s.name?.toLowerCase().includes(storeSearch.toLowerCase()) || s.email?.toLowerCase().includes(storeSearch.toLowerCase()));
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Koi store nahi</td></tr>`; return; }
+  tbody.innerHTML = list.map((s, i) => {
+    const expired = s.expiry && new Date(s.expiry) < new Date();
+    const sc = s.status==='active'?'badge-a':s.status==='pending'?'badge-p':'badge-i';
+    const sl = s.status==='active'?'✅ Active':s.status==='pending'?'⏳ Pending':'⛔ Inactive';
+    return `<tr>
+      <td>${i+1}</td>
+      <td><div style="font-weight:600">${s.name}</div><div style="font-size:11px;color:var(--muted)">${s.city||''}</div></td>
+      <td style="font-size:12px">${s.email}</td>
+      <td style="font-size:12px">${s.phone||'—'}</td>
+      <td style="font-size:12px;${expired?'color:var(--red);font-weight:600':''}">${s.expiry||'—'}${expired?' ⚠️':''}</td>
+      <td><span class="badge ${sc}"><span class="bdot"></span>${sl}</span></td>
+      <td><div class="store-actions">
+        ${s.status!=='active'?`<button class="btn btn-s btn-xs" onclick="toggleStore('${s.id}','active')">✅ Activate</button>`:''}
+        ${s.status==='active'?`<button class="btn btn-d btn-xs" onclick="toggleStore('${s.id}','inactive')">⛔ Deactivate</button>`:''}
+        <button class="btn btn-o btn-xs" onclick="editExpiry('${s.id}','${s.name}')">📅</button>
+        <button class="btn btn-d btn-xs" onclick="delStore('${s.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOwnerStats() {
+  const active = stores.filter(s => s.status === 'active').length;
+  const inactive = stores.filter(s => s.status !== 'active').length;
+  document.getElementById('owTotal').textContent = stores.length;
+  document.getElementById('owActive').textContent = active;
+  document.getElementById('owInactive').textContent = inactive;
+  document.getElementById('owRev').textContent = `₹${(active * SUB_PRICE).toLocaleString('en-IN')}`;
+  document.getElementById('owRevSub').textContent = `${active} active stores`;
+}
+
+function openPayModal() {
+  if (!stores.length) { toast('❌ Pehle store add karo', 'e'); return; }
+  const sel = document.getElementById('payStore');
+  sel.innerHTML = stores.map(s => `<option value="${s.id}">${s.name} (${s.email})</option>`).join('');
+  document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('payAmt').value = SUB_PRICE;
+  openM('mAddPay');
+}
+
+async function savePay() {
+  const email = document.getElementById('payStore').value;
+  const store = stores.find(s => s.id === email);
+  if (!store) return;
+  const btn = document.getElementById('savePayBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await db.collection('payments').add({
+      storeName: store.name,
+      storeEmail: email,
+      amount: parseFloat(document.getElementById('payAmt').value) || SUB_PRICE,
+      date: document.getElementById('payDate').value,
+      month: document.getElementById('payMonth').value,
+      utr: document.getElementById('payUTR').value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeM('mAddPay');
+    toast('💰 Payment recorded!', 's');
+  } catch(e) { toast('❌ Error: ' + e.message, 'e'); }
+  btn.disabled = false; btn.textContent = '💾 Save';
+}
+
+function renderPayLog() {
+  const tbody = document.getElementById('payTbl');
+  if (!payments.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Koi payment nahi</td></tr>`; return; }
+  tbody.innerHTML = payments.map(p => `
+    <tr>
+      <td><strong>${p.storeName}</strong><div style="font-size:11px;color:var(--muted)">${p.storeEmail}</div></td>
+      <td style="color:var(--green);font-weight:700">₹${p.amount}</td>
+      <td>${p.date||'—'}</td>
+      <td>${p.month||'—'}</td>
+      <td style="font-size:12px">${p.utr||'—'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateTopbar() {
+  const n = user.displayName || user.email;
+  const a = n.charAt(0).toUpperCase();
+  document.getElementById('menuName').textContent = n;
+  document.getElementById('menuEmail').textContent = user.email;
+  const av = document.getElementById('topAvatar');
+  if (user.photoURL) av.innerHTML = `<img src="${user.photoURL}">`;
+  else av.textContent = a;
+  document.getElementById('subBadge').textContent = '✓ Active';
+}
+
+function goTab(name) {
+  closeAllMenus();
+  const btn = document.querySelector(`.nav-tab[data-tab="${name}"]`);
+  if (btn) btn.click();
+}
+
+document.getElementById('navTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.nav-tab');
+  if (!tab) return;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  closeAllMenus();
+  if (tab.dataset.tab === 'owner') { renderStores(); renderOwnerStats(); renderPayLog(); }
+});
+
+function openM(id) { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleMenu() {
+  const m = document.getElementById('userMenu');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+function closeAllMenus() { document.getElementById('userMenu').style.display = 'none'; }
+
+document.querySelectorAll('.modal-ov').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+document.addEventListener('click', e => {
+  const m = document.getElementById('userMenu');
+  const b = document.getElementById('topAvatar');
+  if (m && !m.contains(e.target) && e.target !== b) m.style.display = 'none';
+});
+
+function toast(msg, type = 'i') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2800);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function setLoader(msg) { document.getElementById('loaderMsg').textContent = msg; }
+function hideLoader() {
+  const l = document.getElementById('loading');
+  l.classList.add('hide');
+  setTimeout(() => l.style.display = 'none', 400);
+}
+
+function updateDriveInfo() {
+  document.getElementById('driveProds').textContent = `${products.length} items`;
+  document.getElementById('driveBills').textContent = `${bills.length} bills`;
+  document.getElementById('driveCusts').textContent = `${customers.length} customers`;
+  document.getElementById('driveFolder').textContent = user?.displayName || user?.email || 'Store';
+  document.getElementById('lastActivity').textContent = new Date().toLocaleTimeString('hi-IN');
+}
+
+function exportJSON() {
+  const data = { user: user.email, exportDate: new Date().toISOString(), products, bills, customers };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `kiranabook_${user.email}_${Date.now()}.json`; a.click();
+  toast('⬇️ Data exported!', 's');
+}
+
+// Set default expiry +1 month
+const d = new Date(); d.setMonth(d.getMonth()+1);
+const exEl = document.getElementById('nsExpiry');
+if (exEl) exEl.value = d.toISOString().split('T')[0];
+
+// Billing responsive
+function fixBillingGrid() {
+  const g = document.getElementById('billingGrid');
+  if (g) g.style.gridTemplateColumns = window.innerWidth < 768 ? '1fr' : '1fr 360px';
+}
+window.addEventListener('resize', fixBilli
