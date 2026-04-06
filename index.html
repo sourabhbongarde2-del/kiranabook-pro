@@ -2,110 +2,342 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>KiranaBook Pro — Bongarde Software</title>
-<meta name="description" content="Complete Kirana Store Management System">
 
-<!-- ══════════════════════════════════════════════
-  🔥 FIREBASE CONFIG — STEP 3 MEIN YAHAN APNI
-     VALUES DAALANA HAI
-════════════════════════════════════════════════ -->
-<script>
-  const FIREBASE_CONFIG = {
-    apiKey:            "AIzaSyDf3pMhdNuxK25ym9kmvXKqdV6iWOYhVx0",
-    authDomain:        "kiranabook-d050d.firebaseapp.com",
-    projectId:         "kiranabook-d050d",
-    storageBucket:     "kiranabook-d050d.appspot.com",
-    messagingSenderId: "55792176160",
-    appId:             "1:55792176160:web:c74139a7907eeb6cd08045"
-  };
-
-  // 👑 OWNER KI GMAIL
-  const OWNER_EMAIL = "sourabhbongarde2@gmail.com";
-
-  // 💰 SUBSCRIPTION
-  const SUB_PRICE   = 1000;
-  const GPAY_NUMBER = "7875817356";
-  const GPAY_NAME   = "Sourabh Bongarde";
-</script>
-
-<!-- Firebase SDKs (free CDN) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --saffron:#FF6B00; --saffron-l:#FF8C38; --saffron-pale:#FFF3E8;
-  --green:#1A7F4B;   --green-l:#E8F5EE;
-  --dark:#1A1A2E;    --dark2:#16213E;
-  --text:#2D2D2D;    --muted:#7A7A9A;
-  --border:#E8E8F0;  --red:#E53935;
-  --blue:#1565C0;    --yellow:#F9A825;
-  --card-sh:0 4px 24px rgba(0,0,0,0.08);
-  --hover-sh:0 8px 40px rgba(255,107,0,0.15);
+  --saffron: #FF6B00;
+  --saffron-dark: #E65100;
+  --saffron-bg: #FFF3E8;
+  --dark: #1A1A2E;
+  --bg: #F8F9FD;
+  --card-sh: 0 4px 20px rgba(0,0,0,0.06);
+  --border: #E8E8F0;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans',sans-serif;background:#F4F5FA;color:var(--text);min-height:100vh}
 
-/* ── LOADING ── */
-#loading{position:fixed;inset:0;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
-#loading.hide{opacity:0;pointer-events:none}
-.loader-logo{font-family:'Baloo 2',cursive;font-size:36px;font-weight:800;color:white;margin-bottom:16px}
-.loader-logo span{color:var(--saffron)}
-.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--saffron);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loader-msg{color:rgba(255,255,255,.5);font-size:13px;margin-top:12px}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Noto Sans', sans-serif; background: var(--bg); color: #333; line-height: 1.6; }
 
-/* ── SCREENS ── */
-.screen{display:none}
-.screen.active{display:block}
+/* --- LOADING --- */
+#loading { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.5s; }
+#loading.hide { opacity: 0; pointer-events: none; }
+.spinner { width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--saffron); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── LOGIN ── */
-#loginScreen{min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--dark2),#0F3460);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
-#loginScreen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,107,0,.15),transparent 70%);top:-200px;right:-200px;pointer-events:none}
-.login-card{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;text-align:center;position:relative;z-index:1}
-.login-logo{width:72px;height:72px;background:linear-gradient(135deg,var(--saffron),var(--saffron-l));border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;box-shadow:0 8px 32px rgba(255,107,0,.4)}
-.login-title{font-family:'Baloo 2',cursive;font-size:32px;font-weight:800;color:white}
-.login-title span{color:var(--saffron)}
-.login-sub{color:rgba(255,255,255,.5);font-size:14px;margin:6px 0 36px}
-.google-btn{width:100%;padding:16px 24px;background:white;border:none;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:16px;font-weight:600;color:var(--text);cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.2)}
-.google-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
-.google-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.login-features{margin-top:24px;background:rgba(255,255,255,.05);border-radius:12px;padding:16px;text-align:left;list-style:none}
-.login-features li{color:rgba(255,255,255,.6);font-size:13px;padding:4px 0;display:flex;align-items:center;gap:8px}
-.login-features li::before{content:'✦';color:var(--saffron);font-size:10px}
+/* --- LOGIN --- */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+#loginScreen { background: linear-gradient(135deg, var(--dark), #16213E); align-items: center; justify-content: center; padding: 20px; }
+#loginScreen.active { display: flex; }
+.login-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); padding: 40px; border-radius: 28px; text-align: center; width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); }
+.login-card h1 { font-family: 'Baloo 2'; color: white; font-size: 36px; margin-bottom: 8px; }
+.login-card h1 span { color: var(--saffron); }
+.google-btn { width: 100%; padding: 16px; background: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; transition: 0.3s; margin-top: 25px; }
 
-/* ── SUBSCRIPTION WALL ── */
-#subScreen{min-height:100vh;background:linear-gradient(135deg,#FFF8F0,#F0FFF8);display:flex;align-items:center;justify-content:center;padding:20px}
-.sub-card{background:white;border-radius:24px;padding:40px;max-width:480px;width:100%;box-shadow:var(--card-sh);text-align:center}
-.sub-user-row{display:flex;align-items:center;gap:12px;background:var(--saffron-pale);border-radius:12px;padding:12px 16px;margin-bottom:28px;text-align:left}
-.sub-avatar{width:44px;height:44px;border-radius:50%;background:var(--saffron);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;flex-shrink:0;overflow:hidden}
-.sub-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-.sub-user-name{font-weight:600;font-size:15px}
-.sub-user-email{font-size:12px;color:var(--muted)}
-.price-badge{display:inline-flex;flex-direction:column;align-items:center;background:linear-gradient(135deg,var(--saffron),#FF4500);color:white;border-radius:20px;padding:20px 36px;margin-bottom:24px}
-.price-amount{font-family:'Baloo 2',cursive;font-size:48px;font-weight:800;line-height:1}
-.price-period{font-size:13px;opacity:.85;margin-top:4px}
-.features-list{text-align:left;margin:20px 0;list-style:none}
-.features-list li{padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:14px}
-.features-list li:last-child{border-bottom:none}
-.gpay-box{background:#1A1A1A;border-radius:16px;padding:20px;margin:20px 0;color:white}
-.gpay-title{font-size:12px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.gpay-num{font-family:'Baloo 2',cursive;font-size:28px;font-weight:700;color:var(--yellow);letter-spacing:2px}
-.gpay-name{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
-.copy-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:10px;transition:all .2s}
-.copy-btn:hover{background:rgba(255,255,255,.2)}
-.pending-msg{background:#FFF3CD;border:1px solid #FFD700;border-radius:12px;padding:14px 16px;font-size:13px;color:#856404;margin-top:12px;text-align:left}
-.sub-logout{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-top:16px;text-decoration:underline}
+/* --- NAVIGATION --- */
+.topbar { background: var(--dark); height: 65px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.topbar h2 { font-family: 'Baloo 2'; font-size: 22px; }
+.topbar span { color: var(--saffron); }
 
-/* ── TOPBAR ── */
-.topbar{background:linear-gradient(135deg,var(--dark),var(--dark2));height:60px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
-.topbar-brand{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:white}
-.topbar-brand span{color:var(--saffron)}
-.topbar-right{display:flex;align-items:center;gap:12px}
+.nav-tabs { background: white; display: flex; border-bottom: 2px solid var(--border); position: sticky; top: 65px; z-index: 90; }
+.nav-tab { padding: 15px 5px; border: none; background: none; font-weight: 700; color: #777; cursor: pointer; flex: 1; font-size: 13px; transition: 0.2s; position: relative; }
+.nav-tab.active { color: var(--saffron); }
+.nav-tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 3px; background: var(--saffron); border-radius: 10px 10px 0 0; }
+
+/* --- CONTENT UI --- */
+.content { padding: 20px; max-width: 1000px; margin: 0 auto; padding-bottom: 100px; }
+.card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: var(--card-sh); }
+.section-title { font-weight: 800; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+.btn-p { background: var(--saffron); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 15px; transition: 0.2s; }
+.btn-p:active { transform: scale(0.98); background: var(--saffron-dark); }
+
+.fc { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; outline: none; transition: 0.3s; }
+.fc:focus { border-color: var(--saffron); box-shadow: 0 0 0 4px var(--saffron-bg); }
+
+/* --- BILLING GRID --- */
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.item-card { background: white; border: 1.5px solid var(--border); padding: 15px 10px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.2s; }
+.item-card:active { background: var(--saffron-bg); border-color: var(--saffron); transform: translateY(-2px); }
+.item-card b { display: block; font-size: 15px; margin-bottom: 4px; }
+.item-card span { color: var(--saffron); font-weight: 700; font-size: 13px; }
+
+/* --- CART SUMMARY --- */
+#cartPanel { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
+.total-label { font-size: 14px; color: #666; }
+.total-amount { font-size: 22px; font-weight: 800; color: var(--dark); }
+
+</style>
+</head>
+<body>
+
+<div id="loading">
+    <div class="spinner"></div>
+    <p style="color: #666; margin-top: 15px; font-size: 12px;">Connecting to KiranaBook Pro...</p>
+</div>
+
+<div id="loginScreen" class="screen">
+    <div class="login-card">
+        <h1>Kirana<span>Book</span></h1>
+        <p style="color: #aaa; font-size: 14px;">Smart Inventory & Billing for your shop</p>
+        <button class="google-btn" onclick="signIn()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
+            Sign in with Google
+        </button>
+        <p style="color: #555; font-size: 10px; margin-top: 30px;">© 2026 Bongarde Software Solutions</p>
+    </div>
+</div>
+
+<div id="appScreen" class="screen">
+    <div class="topbar">
+        <h2>Kirana<span>Book</span></h2>
+        <div onclick="logout()" style="font-size: 12px; opacity: 0.8; font-weight: 600;">LOGOUT</div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="openTab(event, 'dash')">HOME</button>
+        <button class="nav-tab" onclick="openTab(event, 'bill')">BILLING</button>
+        <button class="nav-tab" onclick="openTab(event, 'prod')">ITEMS</button>
+    </div>
+
+    <div class="content">
+        <div id="tab-dash" class="tab-content">
+            <div class="card" style="background: linear-gradient(to right, var(--saffron), #FF8C00); color: white;">
+                <h2 id="welcomeName">Namaste!</h2>
+                <p id="userMail" style="opacity: 0.9; font-size: 13px;"></p>
+            </div>
+            
+            <h3 class="section-title">📊 Recent Sales</h3>
+            <div id="salesList"></div>
+        </div>
+
+        <div id="tab-bill" class="tab-content" style="display:none">
+            <h3 class="section-title">🛍️ Quick Select</h3>
+            <div id="itemSelector" class="item-grid"></div>
+            
+            <div class="card" style="margin-top: 25px;">
+                <h3 class="section-title">🛒 Current Cart</h3>
+                <div id="cartItemsList" style="font-size: 14px; color: #555;">Cart is empty. Select items above.</div>
+            </div>
+        </div>
+
+        <div id="tab-prod" class="tab-content" style="display:none">
+            <div class="card">
+                <h3 class="section-title">➕ Add New Item</h3>
+                <input type="text" id="itemName" placeholder="Product Name (e.g., Sugar)" class="fc">
+                <input type="number" id="itemPrice" placeholder="Price (₹)" class="fc">
+                <button class="btn-p" onclick="addProduct()">SAVE PRODUCT</button>
+            </div>
+
+            <h3 class="section-title">📦 Your Inventory</h3>
+            <div id="inventoryContainer"></div>
+        </div>
+    </div>
+
+    <div id="cartPanel" style="display: none;">
+        <div>
+            <p class="total-label">Grand Total</p>
+            <p class="total-amount" id="grandTotalText">₹0</p>
+        </div>
+        <button class="btn-p" style="width: auto; padding: 12px 30px;" onclick="checkout()">SAVE BILL</button>
+    </div>
+</div>
+
+<script>
+const DB_CONFIG = {
+    apiKey: "AIzaSyDf3pMhdNuxK25ym9kmvXKqdV6iWOYhVx0",
+    authDomain: "kiranabook-d050d.firebaseapp.com",
+    projectId: "kiranabook-d050d",
+    storageBucket: "kiranabook-d050d.appspot.com",
+    messagingSenderId: "55792176160",
+    appId: "1:55792176160:web:c74139a7907eeb6cd08045"
+};
+
+let db, auth, currentUser, currentCart = [];
+let allProducts = [];
+
+// BOOTSTRAP APP
+window.onload = function() {
+    firebase.initializeApp(DB_CONFIG);
+    db = firebase.firestore();
+    auth = firebase.auth();
+
+    // Stuck Guard: Max 3.5 seconds loading
+    const loadGuard = setTimeout(() => {
+        if(!currentUser) {
+            document.getElementById('loading').classList.add('hide');
+            document.getElementById('loginScreen').classList.add('active');
+        }
+    }, 3500);
+
+    auth.onAuthStateChanged(user => {
+        clearTimeout(loadGuard);
+        if (user) {
+            currentUser = user;
+            initUserSession();
+        } else {
+            document.getElementById('loading').classList.add('hide');
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('appScreen').classList.remove('active');
+        }
+    });
+};
+
+function initUserSession() {
+    document.getElementById('userMail').innerText = currentUser.email;
+    document.getElementById('welcomeName').innerText = "Dukaan: " + currentUser.displayName;
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    startRealtimeSync();
+}
+
+async function signIn() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+    } catch (e) { alert("Login failed: " + e.message); }
+}
+
+function logout() { auth.signOut().then(() => location.reload()); }
+
+// --- DATABASE SYNC ---
+function startRealtimeSync() {
+    const userKey = currentUser.email.toLowerCase();
+    
+    // Sync Products
+    db.collection('users').doc(userKey).collection('products').onSnapshot(snap => {
+        allProducts = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        renderInventoryUI();
+        renderBillingGrid();
+    });
+
+    // Sync Recent Bills
+    db.collection('users').doc(userKey).collection('bills').orderBy('timestamp','desc').limit(10).onSnapshot(snap => {
+        const html = snap.docs.map(doc => {
+            const data = doc.data();
+            return `
+                <div class="card" style="padding: 12px; margin-bottom: 10px; border-left: 5px solid var(--saffron);">
+                    <div style="display:flex; justify-content:space-between">
+                        <b>Bill Total: ₹${data.total}</b>
+                        <small style="color:#888">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                </div>`;
+        }).join('');
+        document.getElementById('salesList').innerHTML = html || "<p style='color:#888; text-align:center;'>No sales today</p>";
+    });
+}
+
+// --- PRODUCT LOGIC ---
+async function addProduct() {
+    const name = document.getElementById('itemName').value;
+    const price = document.getElementById('itemPrice').value;
+    if(!name || !price) return;
+
+    try {
+        await db.collection('users').doc(currentUser.email.toLowerCase()).collection('products').add({
+            name: name,
+            price: parseFloat(price),
+            addedAt: Date.now()
+        });
+        document.getElementById('itemName').value = "";
+        document.getElementById('itemPrice').value = "";
+    } catch (e) { alert("Save Error: " + e.message); }
+}
+
+function renderInventoryUI() {
+    const html = allProducts.map(p => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:15px; margin-bottom:10px;">
+            <div>
+                <div style="font-weight:700">${p.name}</div>
+                <div style="font-size:12px; color:var(--saffron)">M.R.P: ₹${p.price}</div>
+            </div>
+            <button onclick="deleteProduct('${p.id}')" style="background:none; border:none; color:red; font-size:11px;">Remove</button>
+        </div>`).join('');
+    document.getElementById('inventoryContainer').innerHTML = html || "<p style='text-align:center; color:#999;'>No items in inventory</p>";
+}
+
+async function deleteProduct(id) {
+    if(confirm("Remove this item?")) {
+        await db.collection('users').doc(currentUser.email.toLowerCase()).collection('products').doc(id).delete();
+    }
+}
+
+// --- BILLING LOGIC ---
+function renderBillingGrid() {
+    document.getElementById('itemSelector').innerHTML = allProducts.map(p => `
+        <div class="item-card" onclick="addToCart('${p.id}')">
+            <b>${p.name}</b>
+            <span>₹${p.price}</span>
+        </div>`).join('');
+}
+
+function addToCart(id) {
+    const product = allProducts.find(x => x.id === id);
+    currentCart.push(product);
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const panel = document.getElementById('cartPanel');
+    if(currentCart.length > 0) {
+        panel.style.display = 'flex';
+        const total = currentCart.reduce((sum, item) => sum + item.price, 0);
+        document.getElementById('grandTotalText').innerText = "₹" + total;
+        
+        const cartHtml = currentCart.map((item, index) => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:5px;">
+                <span>${item.name}</span>
+                <b>₹${item.price} <span onclick="removeFromCart(${index})" style="color:red; margin-left:10px; font-size:10px;">❌</span></b>
+            </div>`).join('');
+        document.getElementById('cartItemsList').innerHTML = cartHtml;
+    } else {
+        panel.style.display = 'none';
+        document.getElementById('cartItemsList').innerText = "Cart is empty.";
+    }
+}
+
+function removeFromCart(index) {
+    currentCart.splice(index, 1);
+    updateCartUI();
+}
+
+async function checkout() {
+    if(currentCart.length === 0) return;
+    const total = currentCart.reduce((sum, item) => sum + item.price, 0);
+    
+    try {
+        await db.collection('users').doc(currentUser.email.toLowerCase()).collection('bills').add({
+            items: currentCart,
+            total: total,
+            timestamp: Date.now()
+        });
+        currentCart = [];
+        updateCartUI();
+        alert("✅ Bill Saved!");
+    } catch (e) { alert("Checkout error: " + e.message); }
+}
+
+// --- UI UTILS ---
+function openTab(evt, tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tabName).style.display = 'block';
+    evt.currentTarget.classList.add('active');
+    
+    // Auto-hide cart panel if not in billing tab
+    document.getElementById('cartPanel').style.visibility = (tabName === 'bill' && currentCart.length > 0) ? 'visible' : 'hidden';
+}
+</script>
+</body>
+  </html>
 .sub-badge{background:var(--green);color:white;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
 .sub-badge.red{background:var(--red)}
 .avatar-btn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;overflow:hidden;background:var(--saffron)}
