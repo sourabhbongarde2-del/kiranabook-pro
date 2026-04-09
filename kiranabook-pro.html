@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KiranaBook Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<style>
+:root{
+  --bg:#0a0c0f;
+  --surface:#12151a;
+  --surface2:#1a1e26;
+  --border:#2a2f3d;
+  --accent:#f0c040;
+  --accent2:#e8834a;
+  --green:#3fcf8e;
+  --red:#f06060;
+  --blue:#5b8dee;
+  --text:#e8eaf0;
+  --muted:#6b7385;
+  --radius:14px;
+  --shadow:0 8px 32px rgba(0,0,0,.45);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;}
+h1,h2,h3{font-family:'Syne',sans-serif;}
+
+/* ─── LOADING ─── */
+#loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s;}
+.logo-anim{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#0a0c0f;animation:pulse 1.5s ease-in-out infinite;margin-bottom:16px;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.load-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:.5px;}
+.load-sub{color:var(--muted);margin-top:6px;font-size:13px;}
+
+/* ─── LOGIN ─── */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:999;}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:48px 40px;text-align:center;max-width:400px;width:90%;animation:fadeUp .5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.login-logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#0a0c0f;margin:0 auto 20px;}
+.login-card h2{font-size:26px;color:var(--text);margin-bottom:6px;}
+.login-card p{color:var(--muted);margin-bottom:32px;line-height:1.5;}
+.btn-google{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:14px 28px;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;display:flex;align-items:center;gap:12px;justify-content:center;width:100%;transition:.2s;position:relative;overflow:hidden;}
+.btn-google::before{content:'';position:absolute;inset:0;background:var(--accent);opacity:0;transition:.2s;}
+.btn-google:hover::before{opacity:.07;}
+.btn-google:hover{border-color:var(--accent);}
+.google-icon{width:22px;height:22px;}
+.inactive-msg{display:none;background:#f0604020;border:1px solid var(--red);border-radius:12px;padding:14px;color:var(--red);margin-top:16px;font-size:13px;}
+
+/* ─── LAYOUT ─── */
+#app{display:none;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.tlogo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#0a0c0f;}
+.tname{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--text);}
+.tname span{color:var(--accent);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.shop-badge{background:var(--surface2);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:12px;color:var(--muted);}
+.shop-badge strong{color:var(--green);}
+.avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;}
+.avatar-placeholder{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#0a0c0f;cursor:pointer;}
+
+/* ─── NAV ─── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 20px;gap:4px;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-btn{padding:12px 16px;border:none;background:none;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-btn:hover:not(.active){color:var(--text);}
+.nav-icon{font-size:15px;}
+
+/* ─── CONTENT ─── */
+.content{flex:1;padding:24px 20px;max-width:1400px;margin:0 auto;width:100%;}
+.page{display:none;animation:fadeUp .3s ease;}
+.page.active{display:block;}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+
+/* ─── STATS ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:.25s;}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 0 0 60px;opacity:.12;}
+.stat-card.gold::after{background:var(--accent);}
+.stat-card.green::after{background:var(--green);}
+.stat-card.blue::after{background:var(--blue);}
+.stat-card.red::after{background:var(--red);}
+.stat-card:hover{border-color:var(--border);transform:translateY(-2px);box-shadow:var(--shadow);}
+.stat-icon{font-size:22px;margin-bottom:10px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1;}
+.stat-label{color:var(--muted);font-size:12px;margin-top:4px;}
+
+/* ─── BUTTONS ─── */
+.btn{padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:7px;}
+.btn-primary{background:var(--accent);color:#0a0c0f;}
+.btn-primary:hover{background:#f8d060;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:#f0606018;color:var(--red);border:1px solid #f0606030;}
+.btn-danger:hover{background:#f0606030;}
+.btn-success{background:#3fcf8e18;color:var(--green);border:1px solid #3fcf8e30;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+
+/* ─── INPUTS ─── */
+.input-group{margin-bottom:14px;}
+.input-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;width:100%;outline:none;transition:.2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+input::placeholder{color:var(--muted);}
+select option{background:var(--surface2);}
+
+/* ─── TABLE ─── */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+th{background:var(--surface2);padding:12px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid #1e232e;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#ffffff04;}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-green{background:#3fcf8e18;color:var(--green);}
+.badge-red{background:#f0606018;color:var(--red);}
+.badge-yellow{background:#f0c04018;color:var(--accent);}
+.badge-blue{background:#5b8dee18;color:var(--blue);}
+
+/* ─── POS ─── */
+.pos-layout{display:grid;grid-template-columns:1fr 360px;gap:20px;height:calc(100vh - 160px);}
+.pos-left{display:flex;flex-direction:column;gap:14px;overflow:hidden;}
+.pos-search{display:flex;gap:10px;align-items:center;}
+.pos-search input{flex:1;}
+.pos-items{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;padding:4px;}
+.pos-items::-webkit-scrollbar{width:4px;}
+.pos-items::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.product-tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:.2s;position:relative;}
+.product-tile:hover{border-color:var(--accent);transform:translateY(-2px);}
+.product-tile:active{transform:scale(.97);}
+.pt-name{font-weight:600;font-size:13px;margin-bottom:4px;line-height:1.3;}
+.pt-price{color:var(--accent);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.pt-stock{font-size:11px;color:var(--muted);margin-top:3px;}
+.pt-low{border-color:#f0c04030!important;}
+.pt-out{opacity:.5;pointer-events:none;}
+
+/* ─── CART ─── */
+.cart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;}
+.cart-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.cart-items{flex:1;overflow-y:auto;padding:12px;}
+.cart-items::-webkit-scrollbar{width:4px;}
+.cart-items::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;margin-bottom:6px;background:var(--surface2);}
+.ci-name{flex:1;font-size:13px;font-weight:500;line-height:1.3;}
+.ci-price{color:var(--accent);font-size:13px;font-weight:600;white-space:nowrap;}
+.qty-ctrl{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.qty-btn:hover{background:var(--accent);color:#0a0c0f;border-color:var(--accent);}
+.qty-num{font-size:13px;font-weight:600;min-width:20px;text-align:center;}
+.cart-footer{padding:16px 18px;border-top:1px solid var(--border);}
+.cart-totals{margin-bottom:14px;}
+.ct-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+.ct-row.total{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent);border-top:1px solid var(--border);padding-top:10px;margin-top:8px;}
+.discount-row{display:flex;gap:8px;margin-bottom:12px;}
+.discount-row input{flex:1;}
+.payment-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.pay-btn{padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:11px;font-weight:600;transition:.2s;text-align:center;}
+.pay-btn.active{background:#f0c04018;border-color:var(--accent);color:var(--accent);}
+.cust-row{display:flex;gap:8px;margin-bottom:12px;}
+.cust-row input{flex:1;}
+
+/* ─── MODALS ─── */
+.modal-overlay{position:fixed;inset:0;background:#00000088;backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:600px;width:90%;max-height:90vh;overflow-y:auto;animation:fadeUp .3s ease;}
+.modal h3{font-family:'Syne',sans-serif;font-size:20px;margin-bottom:20px;}
+.modal-close{float:right;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;width:28px;height:28px;border-radius:7px;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{color:var(--red);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+
+/* ─── BARCODE ─── */
+.barcode-preview{background:#fff;padding:16px;border-radius:10px;text-align:center;margin-top:14px;}
+.barcode-preview svg{max-width:100%;}
+.barcode-label{font-size:11px;color:#333;margin-top:4px;font-family:monospace;}
+
+/* ─── SCANNER ─── */
+#scanner-container{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3;max-width:320px;margin:0 auto;}
+#scanner-video{width:100%;height:100%;object-fit:cover;}
+.scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.scanner-box{width:200px;height:120px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);}
+.scanner-line{position:absolute;width:196px;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:scan 2s linear infinite;}
+@keyframes scan{0%{top:calc(50% - 58px);}100%{top:calc(50% + 58px);}}
+
+/* ─── DASHBOARD CHARTS ─── */
+.chart-bar-wrap{margin-top:8px;}
+.chart-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.cbr-label{font-size:12px;color:var(--muted);width:80px;text-align:right;flex-shrink:0;}
+.cbr-track{flex:1;background:var(--surface2);border-radius:4px;height:10px;overflow:hidden;}
+.cbr-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.cbr-val{font-size:12px;font-weight:600;width:50px;}
+
+/* ─── EXPIRY ─── */
+.expiry-soon{background:#f0c04018;border:1px solid #f0c04030;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-top:4px;}
+.expiry-expired{background:#f0606018;border:1px solid #f0606030;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--red);}
+
+/* ─── TOAST ─── */
+.toast-container{position:fixed;top:70px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;animation:slideIn .3s ease;display:flex;align-items:center;gap:10px;min-width:240px;box-shadow:var(--shadow);}
+.toast.success{border-color:var(--green);}.toast.error{border-color:var(--red);}
+.toast.info{border-color:var(--blue);}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* ─── INACTIVE OVERLAY ─── */
+#inactive-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:8888;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;}
+.inactive-icon{font-size:64px;margin-bottom:16px;}
+.inactive-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--red);margin-bottom:8px;}
+.inactive-sub{color:var(--muted);max-width:400px;line-height:1.6;margin-bottom:24px;}
+.upi-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:320px;}
+.upi-id{font-family:'Syne',sans-serif;font-size:20px;color:var(--accent);margin:10px 0;}
+.upi-note{font-size:12px;color:var(--muted);}
+
+/* ─── OWNER DASHBOARD ─── */
+.owner-card{background:linear-gradient(135deg,#1a1e26,#12151a);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+
+/* ─── SETTINGS ─── */
+.settings-section{margin-bottom:28px;}
+.settings-section h3{font-family:'Syne',sans-serif;font-size:15px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;font-size:11px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border:none;}
+.setting-info strong{display:block;font-size:14px;margin-bottom:2px;}
+.setting-info span{font-size:12px;color:var(--muted);}
+.toggle{width:44px;height:24px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);cursor:pointer;position:relative;transition:.2s;}
+.toggle.on{background:var(--green);border-color:var(--green);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;}
+.toggle.on::after{left:22px;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .pos-layout{grid-template-columns:1fr;}
+  .pos-left{height:auto;}
+  .cart-panel{max-height:60vh;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .content{padding:16px 12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="logo-anim">K</div>
+  <div class="load-text">KiranaBook Pro</div>
+  <div class="load-sub">Loading your store...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">K</div>
+    <h2>KiranaBook Pro</h2>
+    <p>Complete POS & Management System<br>for Kirana stores. Fast. Simple. Powerful.</p>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="inactive-msg" id="inactive-login-msg">
+      ⚠️ Your account is not active. Please pay ₹500/month to Sourabh on Google Pay: <strong>sourabhbongarde2@gmail.com</strong> and wait for activation.
+    </div>
+  </div>
+</div>
+
+<!-- INACTIVE OVERLAY -->
+<div id="inactive-overlay">
+  <div class="inactive-icon">🔒</div>
+  <div class="inactive-title">Subscription Expired</div>
+  <div class="inactive-sub">Your KiranaBook Pro subscription has expired. Please renew to continue using the app.</div>
+  <div class="upi-box">
+    <div style="font-size:13px;color:var(--muted);">Pay ₹500/month via Google Pay</div>
+    <div class="upi-id">sourabhbongarde2@gmail.com</div>
+    <div class="upi-note">After payment, your account will be activated within 2 hours by our team.</div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:16px;" onclick="signOutUser()">Sign Out</button>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="tlogo">K</div>
+      <div class="tname">Kirana<span>Book</span> Pro</div>
+    </div>
+    <div class="topbar-right">
+      <div class="shop-badge" id="shop-badge">Store: <strong id="shop-name-badge">Loading...</strong></div>
+      <div class="avatar-placeholder" id="user-avatar" title="Profile" onclick="showPage('settings')">U</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-btn" onclick="showPage('pos')" data-page="pos"><span class="nav-icon">🛒</span>POS Billing</button>
+    <button class="nav-btn" onclick="showPage('inventory')" data-page="inventory"><span class="nav-icon">📦</span>Inventory</button>
+    <button class="nav-btn" onclick="showPage('customers')" data-page="customers"><span class="nav-icon">👥</span>Customers</button>
+    <button class="nav-btn" onclick="showPage('sales')" data-page="sales"><span class="nav-icon">📋</span>Sales History</button>
+    <button class="nav-btn" onclick="showPage('reports')" data-page="reports"><span class="nav-icon">📈</span>Reports</button>
+    <button class="nav-btn" onclick="showPage('barcode')" data-page="barcode"><span class="nav-icon">🏷️</span>Barcode/Label</button>
+    <button class="nav-btn" onclick="showPage('settings')" data-page="settings"><span class="nav-icon">⚙️</span>Settings</button>
+    <button class="nav-btn" id="owner-nav-btn" style="display:none;" onclick="showPage('owner')" data-page="owner"><span class="nav-icon">👑</span>Owner Panel</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card gold"><div class="stat-icon">💰</div><div class="stat-val" id="stat-today">₹0</div><div class="stat-label">Today's Sales</div></div>
+        <div class="stat-card green"><div class="stat-icon">🧾</div><div class="stat-val" id="stat-bills">0</div><div class="stat-label">Bills Today</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-val" id="stat-products">0</div><div class="stat-label">Total Products</div></div>
+        <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-val" id="stat-low">0</div><div class="stat-label">Low Stock</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📅 Last 7 Days Sales</div></div>
+          <div class="chart-bar-wrap" id="week-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚠️ Expiry Alerts</div></div>
+          <div id="expiry-alerts"><div style="color:var(--muted);font-size:13px;">No expiry alerts</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header"><div class="card-title">🏆 Top Selling Products</div></div>
+        <div id="top-products"><div style="color:var(--muted);font-size:13px;">No sales data yet</div></div>
+      </div>
+    </div>
+
+    <!-- POS -->
+    <div class="page" id="page-pos">
+      <div class="pos-layout">
+        <div class="pos-left">
+          <div class="pos-search">
+            <input type="text" id="pos-search" placeholder="🔍 Search product or scan barcode..." oninput="filterPOS()" onkeypress="posKeyPress(event)">
+            <button class="btn btn-secondary" onclick="openScannerModal()">📷 Scan</button>
+          </div>
+          <div class="pos-items" id="pos-items-grid"></div>
+        </div>
+        <div class="cart-panel">
+          <div class="cart-header">
+            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;">🛒 Cart <span id="cart-count" style="color:var(--muted);font-size:13px;">(0 items)</span></div>
+            <button class="btn btn-danger btn-sm" onclick="clearCart()">Clear</button>
+          </div>
+          <div class="cart-items" id="cart-items-list"><div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Cart is empty</div></div>
+          <div class="cart-footer">
+            <div class="cust-row">
+              <input type="text" id="cust-name" placeholder="Customer name (optional)">
+              <input type="tel" id="cust-phone" placeholder="Phone">
+            </div>
+            <div class="discount-row">
+              <input type="number" id="discount-val" placeholder="Discount ₹" min="0" oninput="updateCart()">
+            </div>
+            <div class="cart-totals">
+              <div class="ct-row"><span>Subtotal</span><span id="ct-subtotal">₹0.00</span></div>
+              <div class="ct-row"><span>Discount</span><span id="ct-discount" style="color:var(--green);">-₹0.00</span></div>
+              <div class="ct-row total"><span>TOTAL</span><span id="ct-total">₹0.00</span></div>
+            </div>
+            <div class="payment-btns">
+              <div class="pay-btn active" id="pay-cash" onclick="selectPayment('Cash')">💵 Cash</div>
+              <div class="pay-btn" id="pay-upi" onclick="selectPayment('UPI')">📱 UPI</div>
+              <div class="pay-btn" id="pay-credit" onclick="selectPayment('Credit')">📝 Credit</div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:15px;padding:13px;" onclick="completeSale()">✅ Complete Sale</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="card-header" style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">📦 Inventory</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="downloadExcelTemplate()">📥 Download Template</button>
+          <label class="btn btn-secondary" style="cursor:pointer;"><input type="file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importExcel(event)">📤 Import Excel</label>
+          <button class="btn btn-primary" onclick="openAddProduct()">+ Add Product</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;padding:12px 16px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="inv-search" placeholder="🔍 Search products..." style="max-width:240px;" oninput="renderInventory()">
+          <select id="inv-cat-filter" style="max-width:160px;" onchange="renderInventory()"><option value="">All Categories</option></select>
+          <select id="inv-stock-filter" style="max-width:160px;" onchange="renderInventory()">
+            <option value="">All Stock</option>
+            <option value="low">Low Stock</option>
+            <option value="out">Out of Stock</option>
+          </select>
+          <span id="inv-count" style="color:var(--muted);font-size:13px;margin-left:auto;"></span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Barcode</th><th>Product</th><th>Category</th><th>MRP</th><th>Price</th><th>Stock</th><th>Unit</th><th>Expiry</th><th>Actions</th></tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="card-header" style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">👥 Customers</div>
+        <button class="btn btn-primary" onclick="openAddCustomer()">+ Add Customer</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Total Purchases</th><th>Outstanding Credit</th><th>Last Visit</th><th>Actions</th></tr></thead>
+          <tbody id="cust-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div class="page" id="page-sales">
+      <div class="card-header" style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">📋 Sales History</div>
+        <div style="display:flex;gap:10px;">
+          <input type="date" id="sales-from" style="max-width:160px;">
+          <input type="date" id="sales-to" style="max-width:160px;">
+          <button class="btn btn-secondary" onclick="filterSales()">Filter</button>
+          <button class="btn btn-secondary" onclick="exportSalesExcel()">📥 Export</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Actions</th></tr></thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;">📈 Reports</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px;">💰 Sales Summary</div>
+          <div id="report-summary"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px;">📦 Stock Value</div>
+          <div id="report-stock"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px;">📝 Credit Outstanding</div>
+          <div id="report-credit"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title" style="margin-bottom:12px;">🏆 Category-wise Sales</div>
+        <div id="cat-chart"></div>
+      </div>
+    </div>
+
+    <!-- BARCODE / LABEL -->
+    <div class="page" id="page-barcode">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;">🏷️ Barcode & Label Printing</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">Generate Barcode Label</div>
+          <div class="input-group"><label>Product</label>
+            <select id="bc-product" onchange="updateBarcodePreview()"><option value="">Select Product</option></select>
+          </div>
+          <div class="input-group"><label>Label Type</label>
+            <select id="bc-type" onchange="updateBarcodePreview()">
+              <option value="small">Small (38x25mm)</option>
+              <option value="medium">Medium (50x30mm)</option>
+              <option value="large">Large (100x60mm)</option>
+            </select>
+          </div>
+          <div class="input-group"><label>Quantity</label><input type="number" id="bc-qty" value="1" min="1" max="100"></div>
+          <div id="barcode-preview-area" class="barcode-preview" style="display:none;"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="updateBarcodePreview()">Preview</button>
+            <button class="btn btn-primary" onclick="printBarcodeLabels()">🖨️ Print Labels</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">Scanner Settings</div>
+          <div class="setting-row">
+            <div class="setting-info"><strong>Barcode Scanner Gun</strong><span>USB/Bluetooth scanner auto-detected</span></div>
+            <div class="badge badge-green">Active</div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info"><strong>Camera Scanner</strong><span>Use mobile/laptop camera</span></div>
+            <button class="btn btn-secondary btn-sm" onclick="openScannerModal()">Open Scanner</button>
+          </div>
+          <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+            <div class="card-title" style="margin-bottom:12px;">Printer Settings</div>
+            <div class="input-group"><label>Thermal Receipt Printer (USB/Network)</label>
+              <input type="text" id="printer-ip" placeholder="192.168.1.100 or COM3" value="">
+            </div>
+            <div class="input-group"><label>Barcode Printer Model</label>
+              <select><option>ZPL Compatible (Zebra, TSC, etc.)</option><option>TSPL Compatible</option><option>Generic Thermal</option></select>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:8px;" onclick="testPrint()">🖨️ Test Print</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;">⚙️ Settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="settings-section">
+            <h3>Store Information</h3>
+            <div class="input-group"><label>Store Name</label><input type="text" id="s-shop-name" placeholder="My Kirana Store"></div>
+            <div class="input-group"><label>Owner Name</label><input type="text" id="s-owner" placeholder="Owner Name"></div>
+            <div class="input-group"><label>Phone</label><input type="tel" id="s-phone" placeholder="+91 98765 43210"></div>
+            <div class="input-group"><label>Address</label><textarea id="s-address" rows="2" placeholder="Shop address"></textarea></div>
+            <div class="input-group"><label>GST Number (Optional)</label><input type="text" id="s-gst" placeholder="22ABCDE1234F1Z5"></div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="settings-section">
+            <h3>Account</h3>
+            <div class="setting-row">
+              <div class="setting-info"><strong id="set-user-name">Loading...</strong><span id="set-user-email">-</span></div>
+              <button class="btn btn-danger btn-sm" onclick="signOutUser()">Sign Out</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><strong>Subscription Status</strong><span id="set-sub-status">Loading...</span></div>
+              <div id="set-sub-badge" class="badge">-</div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><strong>Expires On</strong><span id="set-expiry">-</span></div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <h3>App Preferences</h3>
+            <div class="setting-row">
+              <div class="setting-info"><strong>Auto-print Receipt</strong><span>Print receipt after each sale</span></div>
+              <div class="toggle" id="toggle-autoprint" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><strong>Sound Effects</strong><span>Beep on scan/sale</span></div>
+              <div class="toggle on" id="toggle-sound" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><strong>Low Stock Alert</strong><span>Alert when stock below:</span></div>
+              <input type="number" id="low-stock-threshold" value="5" style="width:70px;padding:6px 10px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OWNER PANEL -->
+    <div class="page" id="page-owner">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;">👑 Owner Dashboard</div>
+      <div class="stats-grid">
+        <div class="stat-card gold"><div class="stat-icon">🏪</div><div class="stat-val" id="ow-total">0</div><div class="stat-label">Total Shops</div></div>
+        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-val" id="ow-active">0</div><div class="stat-label">Active</div></div>
+        <div class="stat-card red"><div class="stat-icon">❌</div><div class="stat-val" id="ow-expired">0</div><div class="stat-label">Expired</div></div>
+        <div class="stat-card blue"><div class="stat-icon">💰</div><div class="stat-val" id="ow-revenue">₹0</div><div class="stat-label">Monthly Revenue</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 All Shops</div>
+          <button class="btn btn-primary btn-sm" onclick="loadAllShops()">🔄 Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Shop / Email</th><th>Registered</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="owner-shops-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content end -->
+</div><!-- app end -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-product')">✕</button>
+    <h3 id="product-modal-title">Add Product</h3>
+    <input type="hidden" id="prod-edit-id">
+    <div class="form-row">
+      <div class="input-group"><label>Product Name *</label><input type="text" id="prod-name" placeholder="Tata Salt 1kg"></div>
+      <div class="input-group"><label>Category</label><input type="text" id="prod-cat" placeholder="Staples, Beverages..." list="cat-datalist"><datalist id="cat-datalist"></datalist></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Barcode</label><div style="display:flex;gap:8px;"><input type="text" id="prod-barcode" placeholder="Auto or scan/enter"><button class="btn btn-secondary btn-sm" onclick="genBarcode()" style="white-space:nowrap;">Generate</button></div></div>
+      <div class="input-group"><label>HSN Code</label><input type="text" id="prod-hsn" placeholder="1901"></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Purchase Price ₹</label><input type="number" id="prod-purchase" placeholder="0.00" step="0.01"></div>
+      <div class="input-group"><label>Selling Price ₹ *</label><input type="number" id="prod-price" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>MRP ₹</label><input type="number" id="prod-mrp" placeholder="0.00" step="0.01"></div>
+      <div class="input-group"><label>GST %</label><select id="prod-gst"><option value="0">0% (Exempt)</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Stock Quantity *</label><input type="number" id="prod-stock" placeholder="0" min="0"></div>
+      <div class="input-group"><label>Unit</label><select id="prod-unit"><option>pcs</option><option>kg</option><option>gm</option><option>ltr</option><option>ml</option><option>box</option><option>pkt</option><option>dozen</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Weight/Size (for label)</label><input type="text" id="prod-weight" placeholder="1kg, 500gm, 1ltr..."></div>
+      <div class="input-group"><label>Expiry Date</label><input type="date" id="prod-expiry"></div>
+    </div>
+    <div class="input-group"><label>Description / Notes</label><input type="text" id="prod-desc" placeholder="Optional notes"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-product')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-customer">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-customer')">✕</button>
+    <h3>Add Customer</h3>
+    <input type="hidden" id="cust-edit-id">
+    <div class="form-row">
+      <div class="input-group"><label>Name *</label><input type="text" id="cust-add-name" placeholder="Customer name"></div>
+      <div class="input-group"><label>Phone</label><input type="tel" id="cust-add-phone" placeholder="+91..."></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Email</label><input type="email" id="cust-add-email" placeholder="email@example.com"></div>
+      <div class="input-group"><label>Credit Limit ₹</label><input type="number" id="cust-credit-limit" placeholder="0" min="0"></div>
+    </div>
+    <div class="input-group"><label>Address</label><input type="text" id="cust-address" placeholder="Address"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-customer')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-scanner">
+  <div class="modal" style="max-width:400px;">
+    <button class="modal-close" onclick="closeScanner()">✕</button>
+    <h3>📷 Camera Scanner</h3>
+    <div id="scanner-container">
+      <video id="scanner-video" autoplay playsinline muted></video>
+      <div class="scanner-overlay"><div class="scanner-box"></div><div class="scanner-line"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:14px;color:var(--muted);font-size:13px;">Point camera at barcode</div>
+    <div id="scan-result" style="text-align:center;margin-top:10px;font-weight:600;color:var(--accent);"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="closeScanner()">Close</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-bill">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('modal-bill')">✕</button>
+    <h3>🧾 Bill Details</h3>
+    <div id="bill-content"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bill')">Close</button>
+      <button class="btn btn-primary" onclick="printBill()">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE + APP SCRIPTS -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ══════════════════════════════════
+//  🔧 FIREBASE CONFIG — Change this
+// ══════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDf3pMhdNuxK25ym9kmvXKqdV6iWOYhVx0",
+  authDomain: "kiranabook-d050d.firebaseapp.com",
+  projectId: "kiranabook-d050d",
+  storageBucket: "kiranabook-d050d.firebasestorage.app",
+  messagingSenderId: "55792176160",
+  appId: "1:55792176160:web:c74139a7907eeb6cd08045"
+};
+
+const OWNER_EMAIL = "sourabhbongarde2@gmail.com";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let shopData = {};
+let products = [];
+let customers = [];
+let sales = [];
+let settings = {};
+let cart = [];
+let paymentMode = "Cash";
+let scannerStream = null;
+let scannerInterval = null;
+let currentBill = null;
+let isOwner = false;
+
+// ── HELPERS ──────────────────────
+const shopRef = (path) => path ? doc(db, `shops/${currentUser.uid}/${path}`) : doc(db, `shops/${currentUser.uid}`);
+const shopCol = (col) => collection(db, `shops/${currentUser.uid}/${col}`);
+
+function toast(msg, type="info"){
+  const t = document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+function showLoad(){document.getElementById('loading-screen').style.display='flex';}
+function hideLoad(){document.getElementById('loading-screen').style.opacity='0';setTimeout(()=>document.getElementById('loading-screen').style.display='none',500);}
+window.showPage = function(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  if(page==='dashboard') renderDashboard();
+  if(page==='pos') renderPOS();
+  if(page==='inventory') renderInventory();
+  if(page==='customers') renderCustomers();
+  if(page==='sales') renderSales();
+  if(page==='reports') renderReports();
+  if(page==='barcode') renderBarcodeProductList();
+  if(page==='settings') renderSettings();
+  if(page==='owner' && isOwner) loadAllShops();
+};
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+// ── AUTH ──────────────────────────
+window.signInWithGoogle = async () => {
+  try { await signInWithPopup(auth, provider); } catch(e){ toast("Sign-in failed: "+e.message,"error"); }
+};
+window.signOutUser = async () => { await signOut(auth); location.reload(); };
+
+onAuthStateChanged(auth, async (user) => {
+  hideLoad();
+  if(!user){
+    document.getElementById('login-screen').style.display='flex';
+    return;
+  }
+  currentUser = user;
+  document.getElementById('login-screen').style.display='none';
+
+  // Check/create shop doc
+  const shopDoc = await getDoc(doc(db,'shops',user.uid));
+  if(!shopDoc.exists()){
+    // New user - create default shop
+    await setDoc(doc(db,'shops',user.uid),{
+      email:user.email, name:user.displayName||'', 
+      shopName:'My Kirana Store', 
+      active:false, 
+      createdAt:serverTimestamp(),
+      expiresAt:null,
+      owner:OWNER_EMAIL
+    });
+    shopData={active:false,shopName:'My Kirana Store',email:user.email};
+  } else {
+    shopData = shopDoc.data();
+  }
+
+  isOwner = (user.email === OWNER_EMAIL);
+
+  // Check active
+  if(!isOwner){
+    let active = shopData.active;
+    if(active && shopData.expiresAt){
+      const exp = shopData.expiresAt.toDate ? shopData.expiresAt.toDate() : new Date(shopData.expiresAt);
+      if(exp < new Date()) active = false;
+    }
+    if(!active){
+      document.getElementById('inactive-overlay').style.display='flex';
+      return;
+    }
+  }
+
+  // Show app
+  document.getElementById('app').style.display='flex';
+  document.getElementById('inactive-overlay').style.display='none';
+  if(isOwner) document.getElementById('owner-nav-btn').style.display='flex';
+
+  // Set avatar
+  const av = document.getElementById('user-avatar');
+  if(user.photoURL){ av.outerHTML=`<img class="avatar" src="${user.photoURL}" onclick="showPage('settings')" id="user-avatar">`; }
+  else { av.textContent = (user.displayName||user.email||'U')[0].toUpperCase(); }
+
+  await loadAllData();
+  renderDashboard();
+});
+
+// ── DATA LOAD ────────────────────
+async function loadAllData(){
+  const [pSnap, cSnap, sSnap, stSnap] = await Promise.all([
+    getDocs(shopCol('products')),
+    getDocs(shopCol('customers')),
+    getDocs(query(shopCol('sales'), orderBy('createdAt','desc'))),
+    getDoc(doc(db,'shops',currentUser.uid))
+  ]);
+  products = pSnap.docs.map(d=>({id:d.id,...d.data()}));
+  customers = cSnap.docs.map(d=>({id:d.id,...d.data()}));
+  sales = sSnap.docs.map(d=>({id:d.id,...d.data()}));
+  shopData = stSnap.data()||{};
+  settings = shopData;
+  document.getElementById('shop-name-badge').textContent = shopData.shopName||'My Store';
+  populateCatFilter();
+}
+
+// ── DASHBOARD ────────────────────
+function renderDashboard(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todaySales = sales.filter(s=>{ const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(s.createdAt||0); return d>=today; });
+  const todayTotal = todaySales.reduce((a,s)=>a+(s.total||0),0);
+  document.getElementById('stat-today').textContent='₹'+todayTotal.toFixed(0);
+  document.getElementById('stat-bills').textContent=todaySales.length;
+  document.getElementById('stat-products').textContent=products.length;
+  const threshold = parseInt(document.getElementById('low-stock-threshold')?.value||5);
+  document.getElementById('stat-low').textContent=products.filter(p=>(p.stock||0)<=threshold&&(p.stock||0)>0).length;
+
+  // Week chart
+  const wc = document.getElementById('week-chart'); wc.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+    const d2=new Date(d); d2.setDate(d2.getDate()+1);
+    const total=sales.filter(s=>{ const sd=s.createdAt?.toDate?s.createdAt.toDate():new Date(s.createdAt||0); return sd>=d&&sd<d2; }).reduce((a,s)=>a+(s.total||0),0);
+    const max=7000; const pct=Math.min(100,(total/max)*100);
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    wc.innerHTML+=`<div class="chart-bar-row"><div class="cbr-label">${days[d.getDay()]}</div><div class="cbr-track"><div class="cbr-fill" style="width:${pct}%;background:var(--accent);"></div></div><div class="cbr-val" style="color:var(--accent);">₹${total.toFixed(0)}</div></div>`;
+  }
+
+  // Expiry alerts
+  const ea=document.getElementById('expiry-alerts'); ea.innerHTML='';
+  const now=new Date(); const soon=new Date(); soon.setDate(soon.getDate()+30);
+  const expiring=products.filter(p=>p.expiry&&new Date(p.expiry)<=soon);
+  if(!expiring.length) ea.innerHTML='<div style="color:var(--muted);font-size:13px;">✅ No expiry alerts</div>';
+  expiring.forEach(p=>{ const d=new Date(p.expiry); const expired=d<now; ea.innerHTML+=`<div class="${expired?'expiry-expired':'expiry-soon'}">${expired?'❌':'⚠️'} <strong>${p.name}</strong> — ${expired?'Expired':'Expires'} ${d.toLocaleDateString('en-IN')}</div>`; });
+
+  // Top products
+  const tp=document.getElementById('top-products'); tp.innerHTML='';
+  const prodSales={};
+  sales.forEach(s=>(s.items||[]).forEach(i=>{ prodSales[i.name]=(prodSales[i.name]||0)+(i.qty||1); }));
+  const sorted=Object.entries(prodSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(!sorted.length){tp.innerHTML='<div style="color:var(--muted);font-size:13px;">No sales data yet</div>';return;}
+  const maxV=sorted[0][1];
+  sorted.forEach(([name,qty],i)=>{ tp.innerHTML+=`<div class="chart-bar-row"><div class="cbr-label" style="color:var(--text);">${name.substring(0,10)}</div><div class="cbr-track"><div class="cbr-fill" style="width:${(qty/maxV*100)}%;background:${['var(--accent)','var(--green)','var(--blue)','var(--accent2)','var(--red)'][i]};"></div></div><div class="cbr-val">${qty} sold</div></div>`; });
+}
+
+// ── POS ──────────────────────────
+function renderPOS(){ filterPOS(); renderCart(); }
+window.filterPOS = function(){
+  const q=(document.getElementById('pos-search')?.value||'').toLowerCase();
+  const filtered=products.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.barcode||'').includes(q));
+  const grid=document.getElementById('pos-items-grid'); grid.innerHTML='';
+  filtered.forEach(p=>{
+    const out=(p.stock||0)<=0;
+    const low=(p.stock||0)<=5&&!out;
+    const div=document.createElement('div');
+    div.className=`product-tile ${low?'pt-low':''} ${out?'pt-out':''}`;
+    div.innerHTML=`<div class="pt-name">${p.name}</div><div class="pt-price">₹${(p.price||0).toFixed(2)}</div><div class="pt-stock">Stock: ${p.stock||0} ${p.unit||'pcs'}</div>${p.barcode?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">🏷 ${p.barcode}</div>`:''}`;
+    if(!out) div.onclick=()=>addToCart(p);
+    grid.appendChild(div);
+  });
+};
+window.posKeyPress = function(e){ if(e.key==='Enter'){ const q=e.target.value; const p=products.find(p=>p.barcode===q); if(p){ addToCart(p); e.target.value=''; filterPOS(); } } };
+
+function addToCart(p){
+  const i=cart.findIndex(c=>c.id===p.id);
+  if(i>-1){ cart[i].qty++; } else { cart.push({...p,qty:1}); }
+  updateCart(); beep();
+}
+window.removeFromCart=(id)=>{ cart=cart.filter(c=>c.id!==id); updateCart(); };
+window.changeQty=(id,d)=>{ const i=cart.findIndex(c=>c.id===id); if(i>-1){ cart[i].qty+=d; if(cart[i].qty<=0) cart.splice(i,1); } updateCart(); };
+window.clearCart=()=>{ cart=[]; document.getElementById('cust-name').value=''; document.getElementById('cust-phone').value=''; document.getElementById('discount-val').value=''; updateCart(); };
+
+function updateCart(){
+  const list=document.getElementById('cart-items-list');
+  if(!cart.length){ list.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Cart is empty</div>'; }
+  else { list.innerHTML=cart.map(c=>`<div class="cart-item"><div class="ci-name">${c.name}<br><span style="font-size:11px;color:var(--muted);">₹${c.price}×${c.qty}</span></div><div class="qty-ctrl"><button class="qty-btn" onclick="changeQty('${c.id}',-1)">−</button><span class="qty-num">${c.qty}</span><button class="qty-btn" onclick="changeQty('${c.id}',1)">+</button></div><div class="ci-price">₹${(c.price*c.qty).toFixed(2)}</div></div>`).join(''); }
+  const sub=cart.reduce((a,c)=>a+(c.price*c.qty),0);
+  const disc=parseFloat(document.getElementById('discount-val')?.value||0)||0;
+  const total=Math.max(0,sub-disc);
+  document.getElementById('ct-subtotal').textContent='₹'+sub.toFixed(2);
+  document.getElementById('ct-discount').textContent='-₹'+disc.toFixed(2);
+  document.getElementById('ct-total').textContent='₹'+total.toFixed(2);
+  document.getElementById('cart-count').textContent=`(${cart.reduce((a,c)=>a+c.qty,0)} items)`;
+}
+window.selectPayment=function(m){ paymentMode=m; document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`pay-${m.toLowerCase()}`).classList.add('active'); };
+
+window.completeSale=async function(){
+  if(!cart.length){ toast('Cart is empty','error'); return; }
+  const sub=cart.reduce((a,c)=>a+(c.price*c.qty),0);
+  const disc=parseFloat(document.getElementById('discount-val')?.value||0)||0;
+  const total=Math.max(0,sub-disc);
+  const billNo='BILL-'+Date.now();
+  const saleData={ billNo, items:cart.map(c=>({id:c.id,name:c.name,price:c.price,qty:c.qty,total:c.price*c.qty})), subtotal:sub, discount:disc, total, paymentMode, customer:{name:document.getElementById('cust-name').value||'Walk-in',phone:document.getElementById('cust-phone').value||''}, createdAt:serverTimestamp(), shopName:shopData.shopName||'Store' };
+  try {
+    await addDoc(shopCol('sales'),saleData);
+    // Update stock
+    for(const item of cart){
+      const p=products.find(pr=>pr.id===item.id);
+      if(p){ await updateDoc(doc(db,'shops',currentUser.uid,'products',item.id),{stock:(p.stock||0)-item.qty}); p.stock=(p.stock||0)-item.qty; }
+    }
+    // Update customer credit if needed
+    if(paymentMode==='Credit'&&document.getElementById('cust-phone').value){
+      const ph=document.getElementById('cust-phone').value;
+      const cust=customers.find(c=>c.phone===ph);
+      if(cust){ await updateDoc(doc(db,'shops',currentUser.uid,'customers',cust.id),{credit:(cust.credit||0)+total,totalPurchases:(cust.totalPurchases||0)+total,lastVisit:new Date().toISOString()}); }
+    }
+    saleData.id=billNo; saleData.createdAt={toDate:()=>new Date()};
+    sales.unshift(saleData);
+    currentBill=saleData;
+    toast('Sale completed! ₹'+total.toFixed(2),'success');
+    clearCart();
+    showBillModal(saleData);
+    if(document.getElementById('toggle-autoprint')?.classList.contains('on')) setTimeout(printBill,500);
+  } catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+function showBillModal(sale){
+  const items=(sale.items||[]).map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₹${i.price}</td><td>₹${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');
+  document.getElementById('bill-content').innerHTML=`
+    <div style="text-align:center;margin-bottom:16px;"><strong style="font-family:Syne,sans-serif;font-size:18px;">${sale.shopName||'KiranaBook Store'}</strong><br><span style="color:var(--muted);font-size:12px;">Bill No: ${sale.billNo}</span><br><span style="color:var(--muted);font-size:12px;">${new Date().toLocaleString('en-IN')}</span></div>
+    <div style="margin-bottom:10px;font-size:13px;">Customer: <strong>${sale.customer?.name||'Walk-in'}</strong> ${sale.customer?.phone?'| '+sale.customer.phone:''}</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:6px;">Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${items}</tbody></table>
+    <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>₹${sale.subtotal?.toFixed(2)}</span></div>
+      ${sale.discount?`<div style="display:flex;justify-content:space-between;"><span>Discount</span><span style="color:var(--green);">-₹${sale.discount.toFixed(2)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;font-family:Syne,sans-serif;font-size:16px;font-weight:700;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span>TOTAL</span><span style="color:var(--accent);">₹${sale.total?.toFixed(2)}</span></div>
+      <div style="color:var(--muted);font-size:12px;">Payment: ${sale.paymentMode}</div>
+    </div>`;
+  document.getElementById('modal-bill').classList.add('open');
+}
+
+window.printBill=function(){
+  const content=document.getElementById('bill-content')?.innerHTML||'';
+  const w=window.open('','_blank','width=400,height=600');
+  w.document.write(`<!DOCTYPE html><html><head><title>Bill</title><style>body{font-family:monospace;font-size:13px;padding:20px;color:#000;background:#fff;}table{width:100%;border-collapse:collapse;}th,td{padding:4px;text-align:left;}th{border-bottom:1px solid #000;}.total{font-size:16px;font-weight:bold;border-top:1px solid #000;padding-top:8px;}</style></head><body>${content}<script>window.print();window.close();</scri`+`pt></body></html>`);
+  w.document.close();
+};
+
+// ── INVENTORY ─────────────────────
+window.renderInventory=function(){
+  const q=(document.getElementById('inv-search')?.value||'').toLowerCase();
+  const cat=document.getElementById('inv-cat-filter')?.value||'';
+  const stock=document.getElementById('inv-stock-filter')?.value||'';
+  const threshold=parseInt(document.getElementById('low-stock-threshold')?.value||5);
+  let filtered=products.filter(p=>{
+    if(q&&!(p.name||'').toLowerCase().includes(q)&&!(p.barcode||'').includes(q)) return false;
+    if(cat&&p.category!==cat) return false;
+    if(stock==='low'&&!((p.stock||0)<=threshold&&(p.stock||0)>0)) return false;
+    if(stock==='out'&&(p.stock||0)!==0) return false;
+    return true;
+  });
+  document.getElementById('inv-count').textContent=`${filtered.length} products`;
+  const tbody=document.getElementById('inv-tbody'); tbody.innerHTML='';
+  filtered.forEach(p=>{
+    const expClass=p.expiry&&new Date(p.expiry)<new Date()?'badge badge-red':p.expiry&&new Date(p.expiry)<new Date(Date.now()+30*86400000)?'badge badge-yellow':'';
+    tbody.innerHTML+=`<tr><td><span style="font-family:monospace;font-size:11px;">${p.barcode||'-'}</span></td><td><strong>${p.name}</strong>${p.weight?`<br><span style="font-size:11px;color:var(--muted);">${p.weight}</span>`:''}</td><td>${p.category||'-'}</td><td>₹${(p.mrp||p.price||0).toFixed(2)}</td><td style="color:var(--accent);">₹${(p.price||0).toFixed(2)}</td><td><span class="${(p.stock||0)<=0?'badge badge-red':(p.stock||0)<=threshold?'badge badge-yellow':'badge badge-green'}">${p.stock||0}</span></td><td>${p.unit||'pcs'}</td><td>${p.expiry?`<span class="${expClass}">${p.expiry}</span>`:'-'}</td><td><div style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">🗑️</button></div></td></tr>`;
+  });
+};
+function populateCatFilter(){
+  const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];
+  const dl=document.getElementById('cat-datalist'); if(dl) dl.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
+  const f=document.getElementById('inv-cat-filter'); if(f){ const prev=f.value; f.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}" ${c===prev?'selected':''}>${c}</option>`).join(''); }
+}
+
+window.openAddProduct=function(){ document.getElementById('product-modal-title').textContent='Add Product'; document.getElementById('prod-edit-id').value=''; ['name','cat','barcode','hsn','purchase','price','mrp','stock','weight','expiry','desc'].forEach(f=>{ const el=document.getElementById(`prod-${f}`); if(el) el.value=''; }); document.getElementById('prod-gst').value='0'; document.getElementById('prod-unit').value='pcs'; document.getElementById('modal-product').classList.add('open'); };
+window.editProduct=function(id){ const p=products.find(x=>x.id===id); if(!p) return; document.getElementById('product-modal-title').textContent='Edit Product'; document.getElementById('prod-edit-id').value=id; document.getElementById('prod-name').value=p.name||''; document.getElementById('prod-cat').value=p.category||''; document.getElementById('prod-barcode').value=p.barcode||''; document.getElementById('prod-hsn').value=p.hsn||''; document.getElementById('prod-purchase').value=p.purchasePrice||''; document.getElementById('prod-price').value=p.price||''; document.getElementById('prod-mrp').value=p.mrp||''; document.getElementById('prod-gst').value=p.gst||'0'; document.getElementById('prod-stock').value=p.stock||0; document.getElementById('prod-unit').value=p.unit||'pcs'; document.getElementById('prod-weight').value=p.weight||''; document.getElementById('prod-expiry').value=p.expiry||''; document.getElementById('prod-desc').value=p.description||''; document.getElementById('modal-product').classList.add('open'); };
+window.genBarcode=function(){ document.getElementById('prod-barcode').value=Date.now().toString().slice(-12); };
+window.saveProduct=async function(){
+  const name=document.getElementById('prod-name').value.trim();
+  if(!name){ toast('Product name required','error'); return; }
+  const data={ name, category:document.getElementById('prod-cat').value, barcode:document.getElementById('prod-barcode').value, hsn:document.getElementById('prod-hsn').value, purchasePrice:parseFloat(document.getElementById('prod-purchase').value)||0, price:parseFloat(document.getElementById('prod-price').value)||0, mrp:parseFloat(document.getElementById('prod-mrp').value)||0, gst:document.getElementById('prod-gst').value, stock:parseInt(document.getElementById('prod-stock').value)||0, unit:document.getElementById('prod-unit').value, weight:document.getElementById('prod-weight').value, expiry:document.getElementById('prod-expiry').value, description:document.getElementById('prod-desc').value, updatedAt:serverTimestamp() };
+  const editId=document.getElementById('prod-edit-id').value;
+  try {
+    if(editId){ await updateDoc(doc(db,'shops',currentUser.uid,'products',editId),data); const i=products.findIndex(p=>p.id===editId); if(i>-1) products[i]={...products[i],...data}; toast('Product updated','success'); }
+    else { data.createdAt=serverTimestamp(); const ref=await addDoc(shopCol('products'),data); products.push({id:ref.id,...data}); toast('Product added','success'); }
+    closeModal('modal-product'); renderInventory(); populateCatFilter();
+  } catch(e){ toast('Error: '+e.message,'error'); }
+};
+window.deleteProduct=async function(id){
+  if(!confirm('Delete this product?')) return;
+  try { await deleteDoc(doc(db,'shops',currentUser.uid,'products',id)); products=products.filter(p=>p.id!==id); renderInventory(); toast('Deleted','success'); } catch(e){ toast('Error','error'); }
+};
+
+// ── EXCEL IMPORT/EXPORT ──────────────────
+window.downloadExcelTemplate=function(){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([['Name*','Category','Barcode','MRP','Selling Price*','Purchase Price','Stock*','Unit','Weight/Size','Expiry (YYYY-MM-DD)','GST%'],['Tata Salt 1kg','Staples','8901058011234',24,22,18,50,'pcs','1kg','2025-12-31','5']]);
+  XLSX.utils.book_append_sheet(wb,ws,'Products');
+  XLSX.writeFile(wb,'KiranaBook_Product_Template.xlsx');
+};
+window.importExcel=async function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const wb=XLSX.read(ev.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws);
+    let added=0;
+    for(const row of rows){
+      if(!row['Name*']&&!row['Name']) continue;
+      const data={ name:row['Name*']||row['Name']||'', category:row['Category']||'', barcode:String(row['Barcode']||''), mrp:parseFloat(row['MRP'])||0, price:parseFloat(row['Selling Price*']||row['Selling Price'])||0, purchasePrice:parseFloat(row['Purchase Price'])||0, stock:parseInt(row['Stock*']||row['Stock'])||0, unit:row['Unit']||'pcs', weight:String(row['Weight/Size']||''), expiry:row['Expiry (YYYY-MM-DD)']||'', gst:String(row['GST%']||'0'), createdAt:serverTimestamp() };
+      try { const ref=await addDoc(shopCol('products'),data); products.push({id:ref.id,...data}); added++; } catch(ex){}
+    }
+    toast(`Imported ${added} products`,'success'); renderInventory(); populateCatFilter(); e.target.value='';
+  };
+  reader.readAsBinaryString(file);
+};
+window.exportSalesExcel=function(){
+  const rows=sales.map(s=>({ 'Bill No':s.billNo, 'Date':s.createdAt?.toDate?s.createdAt.toDate().toLocaleString('en-IN'):new Date().toLocaleString('en-IN'), 'Customer':s.customer?.name||'Walk-in', 'Items':( s.items||[]).map(i=>`${i.name}×${i.qty}`).join(', '), 'Total':s.total, 'Payment':s.paymentMode }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Sales');
+  XLSX.writeFile(wb,'KiranaBook_Sales.xlsx');
+};
+
+// ── CUSTOMERS ──────────────────────────
+function renderCustomers(){
+  const tbody=document.getElementById('cust-tbody'); tbody.innerHTML='';
+  customers.forEach(c=>{ tbody.innerHTML+=`<tr><td><strong>${c.name}</strong></td><td>${c.phone||'-'}</td><td>₹${(c.totalPurchases||0).toFixed(2)}</td><td style="color:${(c.credit||0)>0?'var(--red)':'var(--green)'};">₹${(c.credit||0).toFixed(2)}</td><td>${c.lastVisit?new Date(c.lastVisit).toLocaleDateString('en-IN'):'-'}</td><td><button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">🗑️</button></td></tr>`; });
+}
+window.openAddCustomer=()=>{ document.getElementById('cust-edit-id').value=''; ['add-name','add-phone','add-email','credit-limit','address'].forEach(f=>{const el=document.getElementById(`cust-${f}`);if(el)el.value='';}); document.getElementById('modal-customer').classList.add('open'); };
+window.saveCustomer=async function(){
+  const name=document.getElementById('cust-add-name').value.trim();
+  if(!name){toast('Name required','error');return;}
+  const data={name,phone:document.getElementById('cust-add-phone').value,email:document.getElementById('cust-add-email').value,creditLimit:parseFloat(document.getElementById('cust-credit-limit').value)||0,address:document.getElementById('cust-address').value,credit:0,totalPurchases:0,createdAt:serverTimestamp()};
+  try{const ref=await addDoc(shopCol('customers'),data);customers.push({id:ref.id,...data});toast('Customer added','success');closeModal('modal-customer');renderCustomers();}catch(e){toast('Error','error');}
+};
+window.deleteCustomer=async function(id){if(!confirm('Delete?'))return;try{await deleteDoc(doc(db,'shops',currentUser.uid,'customers',id));customers=customers.filter(c=>c.id!==id);renderCustomers();toast('Deleted','success');}catch(e){toast('Error','error');}};
+
+// ── SALES ──────────────────────────────
+function renderSales(){
+  const tbody=document.getElementById('sales-tbody'); tbody.innerHTML='';
+  let list=[...sales];
+  const from=document.getElementById('sales-from')?.value; const to=document.getElementById('sales-to')?.value;
+  if(from) list=list.filter(s=>{ const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(); return d>=new Date(from); });
+  if(to) list=list.filter(s=>{ const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(); return d<=new Date(to+'T23:59:59'); });
+  list.forEach(s=>{ const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(); tbody.innerHTML+=`<tr><td><span style="font-family:monospace;font-size:12px;">${s.billNo}</span></td><td>${d.toLocaleString('en-IN')}</td><td>${s.customer?.name||'Walk-in'}</td><td>${(s.items||[]).length} items</td><td style="color:var(--accent);font-weight:600;">₹${(s.total||0).toFixed(2)}</td><td><span class="badge ${s.paymentMode==='Cash'?'badge-green':s.paymentMode==='UPI'?'badge-blue':'badge-yellow'}">${s.paymentMode}</span></td><td><button class="btn btn-secondary btn-sm" onclick="viewSaleBill('${s.id}')">View</button></td></tr>`; });
+}
+window.filterSales=()=>renderSales();
+window.viewSaleBill=function(id){ const s=sales.find(x=>x.id===id); if(s){showBillModal(s);} };
+
+// ── REPORTS ───────────────────────────
+function renderReports(){
+  const total=sales.reduce((a,s)=>a+(s.total||0),0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayTotal=sales.filter(s=>{const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(0);return d>=today;}).reduce((a,s)=>a+(s.total||0),0);
+  const month30=new Date(); month30.setDate(month30.getDate()-30);
+  const monthTotal=sales.filter(s=>{const d=s.createdAt?.toDate?s.createdAt.toDate():new Date(0);return d>=month30;}).reduce((a,s)=>a+(s.total||0),0);
+  document.getElementById('report-summary').innerHTML=`<div class="ct-row" style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Today</span><strong style="color:var(--accent);">₹${todayTotal.toFixed(2)}</strong></div><div class="ct-row" style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Last 30 Days</span><strong style="color:var(--green);">₹${monthTotal.toFixed(2)}</strong></div><div class="ct-row" style="display:flex;justify-content:space-between;"><span>All Time</span><strong>₹${total.toFixed(2)}</strong></div>`;
+  const sv=products.reduce((a,p)=>a+(p.stock||0)*(p.price||0),0);
+  document.getElementById('report-stock').innerHTML=`<div style="font-family:Syne,sans-serif;font-size:28px;font-weight:800;color:var(--blue);">₹${sv.toFixed(2)}</div><div style="color:var(--muted);font-size:12px;margin-top:4px;">Total inventory value</div><div style="margin-top:12px;font-size:13px;">${products.length} products in stock</div>`;
+  const totalCredit=customers.reduce((a,c)=>a+(c.credit||0),0);
+  document.getElementById('report-credit').innerHTML=`<div style="font-family:Syne,sans-serif;font-size:28px;font-weight:800;color:var(--red);">₹${totalCredit.toFixed(2)}</div><div style="color:var(--muted);font-size:12px;margin-top:4px;">Outstanding credit</div><div style="margin-top:12px;font-size:13px;">${customers.filter(c=>c.credit>0).length} customers on credit</div>`;
+  // Category chart
+  const catMap={}; sales.forEach(s=>(s.items||[]).forEach(i=>{ const p=products.find(x=>x.id===i.id); const cat=p?.category||'Other'; catMap[cat]=(catMap[cat]||0)+(i.price*i.qty); }));
+  const catSorted=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const cc=document.getElementById('cat-chart'); cc.innerHTML='';
+  const maxC=catSorted[0]?.[1]||1;
+  catSorted.forEach(([cat,v],i)=>{ cc.innerHTML+=`<div class="chart-bar-row"><div class="cbr-label" style="color:var(--text);">${cat}</div><div class="cbr-track"><div class="cbr-fill" style="width:${(v/maxC*100)}%;background:${['var(--accent)','var(--green)','var(--blue)','var(--accent2)','var(--red)'][i%5]};"></div></div><div class="cbr-val">₹${v.toFixed(0)}</div></div>`; });
+}
+
+// ── BARCODE ───────────────────────────
+function renderBarcodeProductList(){
+  const sel=document.getElementById('bc-product'); sel.innerHTML='<option value="">Select Product</option>';
+  products.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.name}${p.barcode?' ('+p.barcode+')':''}</option>`);
+}
+window.updateBarcodePreview=function(){
+  const id=document.getElementById('bc-product').value;
+  const p=products.find(x=>x.id===id); if(!p) return;
+  const area=document.getElementById('barcode-preview-area'); area.style.display='block';
+  area.innerHTML=`<svg id="bc-svg"></svg><div class="barcode-label"><strong>${p.name}</strong>${p.weight?' '+p.weight:''}<br>MRP: ₹${p.mrp||p.price} ${p.expiry?'| Exp: '+p.expiry:''}</div>`;
+  if(p.barcode||p.id){
+    try{JsBarcode("#bc-svg",p.barcode||p.id,{format:"CODE128",width:2,height:50,displayValue:true,fontSize:12,margin:6});}catch(e){}
+  }
+};
+window.printBarcodeLabels=function(){
+  const id=document.getElementById('bc-product').value;
+  const p=products.find(x=>x.id===id); if(!p){toast('Select a product','error');return;}
+  const qty=parseInt(document.getElementById('bc-qty').value)||1;
+  const area=document.getElementById('barcode-preview-area').innerHTML;
+  const labels=Array(qty).fill(`<div style="display:inline-block;border:1px dashed #ccc;padding:8px;margin:4px;text-align:center;">${area}</div>`).join('');
+  const w=window.open('','_blank','width=600,height=400');
+  w.document.write(`<!DOCTYPE html><html><head><title>Labels</title><style>body{font-family:monospace;font-size:11px;background:#fff;color:#000;}</style></head><body>${labels}<script>window.print();window.close();</scri`+`pt></body></html>`);
+  w.document.close();
+};
+
+// ── SETTINGS ──────────────────────────
+function renderSettings(){
+  document.getElementById('s-shop-name').value=shopData.shopName||'';
+  document.getElementById('s-owner').value=shopData.ownerName||currentUser?.displayName||'';
+  document.getElementById('s-phone').value=shopData.phone||'';
+  document.getElementById('s-address').value=shopData.address||'';
+  document.getElementById('s-gst').value=shopData.gst||'';
+  document.getElementById('set-user-name').textContent=currentUser?.displayName||'User';
+  document.getElementById('set-user-email').textContent=currentUser?.email||'';
+  const exp=shopData.expiresAt?.toDate?shopData.expiresAt.toDate():null;
+  const active=shopData.active&&(!exp||exp>new Date());
+  document.getElementById('set-sub-status').textContent=isOwner?'Owner (Always Active)':active?'Active':'Expired';
+  document.getElementById('set-sub-badge').className='badge '+(isOwner||active?'badge-green':'badge-red');
+  document.getElementById('set-sub-badge').textContent=isOwner||active?'✅ Active':'❌ Expired';
+  document.getElementById('set-expiry').textContent=exp?exp.toLocaleDateString('en-IN'):isOwner?'Never':'Not set';
+}
+window.saveSettings=async function(){
+  const data={ shopName:document.getElementById('s-shop-name').value, ownerName:document.getElementById('s-owner').value, phone:document.getElementById('s-phone').value, address:document.getElementById('s-address').value, gst:document.getElementById('s-gst').value };
+  try{ await updateDoc(doc(db,'shops',currentUser.uid),data); shopData={...shopData,...data}; document.getElementById('shop-name-badge').textContent=data.shopName||'Store'; toast('Settings saved','success'); } catch(e){ toast('Error','error'); }
+};
+
+// ── OWNER PANEL ───────────────────────
+window.loadAllShops=async function(){
+  if(!isOwner){ toast('Access denied','error'); return; }
+  const snap=await getDocs(collection(db,'shops'));
+  const all=snap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('ow-total').textContent=all.length;
+  const now=new Date();
+  const active=all.filter(s=>s.active&&(!s.expiresAt||(s.expiresAt?.toDate?s.expiresAt.toDate():new Date(s.expiresAt))>now));
+  document.getElementById('ow-active').textContent=active.length;
+  document.getElementById('ow-expired').textContent=all.length-active.length;
+  document.getElementById('ow-revenue').textContent='₹'+(active.length*500).toLocaleString('en-IN');
+  const tbody=document.getElementById('owner-shops-tbody'); tbody.innerHTML='';
+  all.forEach(shop=>{
+    if(shop.id===currentUser.uid&&isOwner) return; // skip owner's own
+    const exp=shop.expiresAt?.toDate?shop.expiresAt.toDate():shop.expiresAt?new Date(shop.expiresAt):null;
+    const isActive=shop.active&&(!exp||exp>now);
+    tbody.innerHTML+=`<tr>
+      <td><strong>${shop.shopName||'Unnamed Store'}</strong><br><span style="font-size:11px;color:var(--muted);">${shop.email||''}</span></td>
+      <td>${shop.createdAt?.toDate?shop.createdAt.toDate().toLocaleDateString('en-IN'):'-'}</td>
+      <td>${exp?exp.toLocaleDateString('en-IN'):'Not set'}</td>
+      <td><span class="badge ${isActive?'badge-green':'badge-red'}">${isActive?'Active':'Expired'}</span></td>
+      <td>
+        <button class="btn btn-success btn-sm" onclick="activateShop('${shop.id}',30)">✅ +30 Days</button>
+        <button class="btn btn-danger btn-sm" onclick="deactivateShop('${shop.id}')">❌ Deactivate</button>
+      </td>
+    </tr>`;
+  });
+};
+window.activateShop=async function(uid,days){
+  const exp=new Date(); exp.setDate(exp.getDate()+days);
+  await updateDoc(doc(db,'shops',uid),{active:true,expiresAt:Timestamp.fromDate(exp)});
+  toast(`Shop activated for ${days} days`,'success');
+  loadAllShops();
+};
+window.deactivateShop=async function(uid){
+  if(!confirm('Deactivate this shop?')) return;
+  await updateDoc(doc(db,'shops',uid),{active:false});
+  toast('Shop deactivated','success'); loadAllShops();
+};
+
+// ── SCANNER ───────────────────────────
+window.openScannerModal=async function(){
+  document.getElementById('modal-scanner').classList.add('open');
+  try{
+    scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    document.getElementById('scanner-video').srcObject=scannerStream;
+    // Simple barcode detection via BarcodeDetector API if available
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['code_128','ean_13','ean_8','qr_code','upc_a','upc_e']});
+      const vid=document.getElementById('scanner-video');
+      scannerInterval=setInterval(async()=>{ try{ const barcodes=await detector.detect(vid); if(barcodes.length){ const code=barcodes[0].rawValue; document.getElementById('scan-result').textContent='✅ Scanned: '+code; document.getElementById('pos-search').value=code; closeScanner(); filterPOS(); const p=products.find(pr=>pr.barcode===code); if(p) addToCart(p); } }catch(ex){} },500);
+    }
+  }catch(e){ toast('Camera not available: '+e.message,'error'); }
+};
+window.closeScanner=function(){ if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;} if(scannerInterval){clearInterval(scannerInterval);scannerInterval=null;} closeModal('modal-scanner'); };
+
+// ── TEST PRINT ────────────────────────
+window.testPrint=function(){
+  const w=window.open('','_blank','width=400,height=200');
+  w.document.write(`<html><body style="font-family:monospace;text-align:center;padding:20px;"><h2>${shopData.shopName||'KiranaBook Store'}</h2><p>TEST PRINT - ${new Date().toLocaleString('en-IN')}</p><p>Printer Connected ✅</p><scri`+`pt>window.print();window.close();</script></body></html>`);
+};
+
+// ── BEEP ─────────────────────────────
+function beep(){
+  if(!document.getElementById('toggle-sound')?.classList.contains('on')) return;
+  try{ const ctx=new(window.AudioContext||window.webkitAudioContext)(); const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.connect(g); g.connect(ctx.destination); osc.frequency.value=880; g.gain.setValueAtTime(0.3,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.1); osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.1); }catch(e){}
+}
+</script>
+</body>
+</html>
